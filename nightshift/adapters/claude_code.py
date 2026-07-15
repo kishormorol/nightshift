@@ -17,6 +17,7 @@ import shutil
 import signal
 import subprocess
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -43,6 +44,10 @@ DISALLOWED_TOOLS = (
 #: Where Claude Code records the user's own sessions; the newest mtime under
 #: here is our proxy for "a human is using this right now".
 CLAUDE_PROJECTS_DIR = Path("~/.claude/projects")
+
+#: Slack given to a process that should already be dying, before we conclude
+#: the deadline timer failed and kill the tree ourselves.
+_REAP_GRACE_S = 10
 
 _READ_ONLY_PREAMBLE = (
     "You are running unattended as part of an automated read-only review.\n"
@@ -280,9 +285,15 @@ class ClaudeCodeAdapter:
                 start_new_session=True,
             )
         except subprocess.TimeoutExpired:
-            # start_new_session put the CLI in its own process group, so the
-            # kill that subprocess.run already issued takes any children with
-            # it rather than leaving orphans holding the quota.
+            # This comment used to claim subprocess.run's kill takes the whole
+            # process group with it. It does not: on timeout it calls
+            # Popen.kill(), which is os.kill(pid) on the direct child alone —
+            # start_new_session buys us nothing here. Any grandchild survives
+            # as an orphan still holding provider quota.
+            #
+            # Nothing gates on this path today: the scheduler always passes an
+            # event sink, so every real run streams. It stays for callers that
+            # want no events, and it is honest about what it does not do.
             return finish("timeout", "", f"no output after {timeout_s}s")
         except FileNotFoundError:
             return finish("failed", "", f"`{self.binary}` is not on PATH")
@@ -353,6 +364,7 @@ class ClaudeCodeAdapter:
                 timed_out.set()
                 _kill_tree(proc)
 
+        deadline = time.monotonic() + timeout_s
         timer = threading.Timer(timeout_s, on_deadline)
         timer.daemon = True
         timer.start()
@@ -384,12 +396,25 @@ class ClaudeCodeAdapter:
                         prose.append(event.text)
                     _emit(on_event, event)
         finally:
+            # The timer stays armed across the wait, because it is the only
+            # thing that can end a child which closed stdout and then hung —
+            # an EOF here does not mean the process is going to exit. Cancelling
+            # it before an unbounded wait() left nothing to terminate such a
+            # run, and cron would sit on the lock until someone noticed.
+            try:
+                proc.wait(timeout=max(deadline - time.monotonic(), 0) + _REAP_GRACE_S)
+            except subprocess.TimeoutExpired:
+                # The timer should have fired by now; it did not, so do its job.
+                _kill_tree(proc)
+                try:
+                    proc.wait(timeout=_REAP_GRACE_S)
+                except subprocess.TimeoutExpired:
+                    pass
             timer.cancel()
             with guard:
-                # Past this point on_deadline must not touch the process:
-                # we are about to reap it and free its pid.
+                # Only now may on_deadline be told to keep its hands off: the
+                # process is reaped and its pid is free to be reused.
                 reaped = True
-            proc.wait()
             drain.join(timeout=2)
             # Close the pipes rather than leaving them to the collector.
             for pipe in (proc.stdout, proc.stderr):

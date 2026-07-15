@@ -448,6 +448,12 @@ def watch(history: int) -> None:
                 continue
             for path in reversed(fresh):
                 seen.add(path)
+                # Startup skips abandoned logs; the loop has to as well. A run
+                # interrupted while we are watching leaves an `end`-less log,
+                # and following it would park the watcher for the whole stale
+                # window with real runs going unrendered behind it.
+                if not events.is_finished(path) and events.is_stale(path):
+                    continue
                 for payload in events.follow(path):
                     _render_log_event(payload)
     except KeyboardInterrupt:

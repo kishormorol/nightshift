@@ -412,7 +412,7 @@ class FakePopen:
         self.returncode = returncode
         self.pid = 424242
 
-    def wait(self):
+    def wait(self, timeout=None):
         return self.returncode
 
     def poll(self):
@@ -559,3 +559,71 @@ def test_an_error_result_becomes_an_error_event(adapter, popen_spy, project_dir)
 
     assert [e.kind for e in seen] == ["error"]
     assert seen[0].text == "rate limited"
+
+
+# ---- the child that will not die ---------------------------------------
+
+
+class HangingPopen:
+    """stdout reaches EOF, but the process keeps running.
+
+    Real and reproducible: a child that calls ``os.close(1)`` and carries on.
+    An EOF on our end says every writer let go of the pipe — it does not say
+    the process is exiting.
+    """
+
+    def __init__(self, lines):
+        self.stdout = io.StringIO("".join(lines))
+        self.stderr = io.StringIO("")
+        self.pid = 999_999
+        self.returncode = None
+        self.killed = False
+        self.waits: list[float | None] = []
+
+    def poll(self):
+        return self.returncode
+
+    def wait(self, timeout=None):
+        self.waits.append(timeout)
+        if timeout is None:
+            # The bug in one assertion: with the timer already cancelled, an
+            # unbounded wait here never returns and cron holds the lock forever.
+            raise AssertionError("unbounded wait() — nothing left to end the child")
+        if self.killed:
+            self.returncode = -9
+            return -9
+        raise subprocess.TimeoutExpired(cmd="claude", timeout=timeout)
+
+    def kill(self):
+        self.killed = True
+        self.returncode = -9
+
+
+def test_a_child_that_closes_stdout_and_hangs_is_still_killed(
+    adapter, popen_spy, project_dir
+):
+    # Shipped in the pid-reuse fix: the finally cancelled the deadline timer
+    # and then waited without one, so a run whose stdout ended early — but
+    # whose process lived on — wedged forever, holding the scheduler's lock.
+    hanging = HangingPopen([line({"type": "system", "subtype": "init"})])
+    popen_spy.box["proc"] = hanging
+
+    result = adapter.run("review", project_dir, 600, on_event=lambda e: None)
+
+    assert hanging.killed, "the child was left running"
+    assert None not in hanging.waits, "waited with no deadline to save it"
+    assert result.status in {"failed", "timeout"}
+
+
+def test_the_deadline_survives_until_the_process_is_reaped(
+    adapter, popen_spy, project_dir
+):
+    hanging = HangingPopen([line({"type": "system", "subtype": "init"})])
+    popen_spy.box["proc"] = hanging
+
+    adapter.run("review", project_dir, 5, on_event=lambda e: None)
+
+    # Every wait is bounded, and the first is bounded by what is left of the
+    # run's own deadline rather than by nothing at all.
+    assert hanging.waits
+    assert all(w is not None for w in hanging.waits)

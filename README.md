@@ -17,7 +17,7 @@ projects while you're busy, one digest every morning.
 ---
 
 ```bash
-pipx install nightshift
+pipx install nightshift-cli
 nightshift init
 nightshift run --now
 ```

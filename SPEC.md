@@ -247,7 +247,7 @@ non-negotiably:
 GIF/asciinema placeholder above the fold, then exactly:
 
 ```bash
-pipx install nightshift
+pipx install nightshift-cli
 nightshift init
 nightshift run --now
 ```

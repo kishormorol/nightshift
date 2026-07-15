@@ -186,27 +186,36 @@ export default async function OpengraphImage() {
             while you&apos;re busy, one digest every morning.
           </div>
 
-          {/* Both nowrap: JetBrains Mono is wider than the fallback Satori uses
-              when a font fails to load, and a wrapped install command is the
-              single worst thing this card could show. */}
-          <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
+          {/* Stacked, not side by side. Beside each other these two fit only
+              at one specific package-name length — renaming to `nightshift-cli`
+              silently clipped the button mid-word. A column survives any name.
+              flexShrink:0 so the button is never squeezed into its own text. */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: 16,
+            }}
+          >
             <div
               style={{
-                fontSize: 18,
+                flexShrink: 0,
+                fontSize: 20,
                 fontWeight: 700,
                 color: "#06090f",
                 background: ACCENT,
                 borderRadius: 11,
-                padding: "14px 22px",
+                padding: "14px 24px",
                 fontFamily: "JetBrains Mono",
                 whiteSpace: "nowrap",
               }}
             >
-              pipx install nightshift
+              pipx install nightshift-cli
             </div>
             <div
               style={{
-                fontSize: 15,
+                fontSize: 16,
                 color: "#8593b8",
                 fontFamily: "JetBrains Mono",
                 whiteSpace: "nowrap",

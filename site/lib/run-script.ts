@@ -86,10 +86,10 @@ export const LINE_COLOR: Record<LineKind, string> = {
   ok: "var(--color-ok)",
 };
 
-export const INSTALL_COMMAND = "pipx install nightshift";
+export const INSTALL_COMMAND = "pipx install nightshift-cli";
 
 export const QUICKSTART = [
-  "pipx install nightshift",
+  "pipx install nightshift-cli",
   "nightshift init",
   "nightshift run --now",
 ].join("\n");

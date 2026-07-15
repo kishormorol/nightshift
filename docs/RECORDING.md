@@ -1,7 +1,7 @@
 # Recording the README hero
 
 The animation above the fold in `README.md` is the whole pitch: see it → want
-it → install in one paste. It sits directly above the `pipx install nightshift`
+it → install in one paste. It sits directly above the `pipx install nightshift-cli`
 line, so whatever it shows is the first thing a visitor learns about the tool.
 
 ## What's there now

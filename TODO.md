@@ -38,28 +38,26 @@ Two honest ways out:
 Leaning toward changing the CLI. Needs a decision either way; leaving both as
 they are means shipping a page that misrepresents the tool.
 
-## 2. `pipx install nightshift` installs someone else's package
+## 2. Claim `nightshift-cli` on PyPI before announcing
 
-**The PyPI name is taken.** `nightshift` on PyPI is Ian Fucci's NMR
-spectroscopy plotting tool (v1.0.1, live today):
-<https://pypi.org/project/nightshift/>. Anyone who follows our README gets that
-instead.
+The distribution is named `nightshift-cli` because PyPI's `nightshift` is Ian
+Fucci's NMR spectroscopy plotting tool (v1.0.1, live):
+<https://pypi.org/project/nightshift/>. The console script is still
+`nightshift` — the project name and the installed command are independent, so
+`pipx install nightshift-cli` gives you `nightshift run`.
 
-This is not cosmetic. The command appears in:
+`nightshift-cli` was unclaimed when the rename landed, **but names are
+first-come and nothing reserves it.** Until it's registered, the README's
+quickstart is a promise about a package that doesn't exist yet.
 
-- `README.md` — the quickstart SPEC.md mandates verbatim
-- `pyproject.toml` — `name = "nightshift"`, which cannot be published as-is
-- `site/lib/run-script.ts` — the hero button and the copy-to-clipboard text
-- `site/app/opengraph-image.tsx` — the og:image, i.e. the thing people screenshot
+```bash
+python -m build
+python -m twine upload dist/*      # claims the name
+```
 
-**Decide a distribution name before publishing or announcing anything.**
-`nightshift-cli` and `nightshift-ai` were both free at the time of writing —
-check again, they're first-come. The console script can stay `nightshift`
-regardless: the PyPI project name and the installed command are independent, so
-`pipx install nightshift-cli` still gives you `nightshift run`.
-
-Until this is resolved the repo should stay private (it is), because publishing
-it means publishing an install instruction that points at a stranger's package.
+Until then, `pipx install nightshift-cli` fails with "no matching
+distribution", which is at least honest — it fails rather than installing the
+wrong software, which is what the old name did.
 
 ## 3. Record a real asciinema cast
 

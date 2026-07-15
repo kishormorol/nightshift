@@ -109,7 +109,7 @@ class StubAdapter:
     """Base for adapters that are documented but not yet implemented."""
 
     name: str = "stub"
-    help_wanted_url: str = "https://github.com/stony-lab/nightshift/issues"
+    help_wanted_url: str = "https://github.com/kishormorol/nightshift/issues"
 
     def available(self) -> bool:
         return False

@@ -50,3 +50,58 @@ jobs:
       - name: The packaged wheel must carry the prompt templates
         run: |
           python -m zipfile -l dist/*.whl | grep -q 'nightshift/prompts/code_review.md'
+      - name: The wheel must not carry the landing page
+        # site/ is a sibling of the package, not part of it. If it ever lands in
+        # the wheel, pyproject's packages list has drifted.
+        run: |
+          ! python -m zipfile -l dist/*.whl | grep -q 'site/'
+
+      - name: The README demo must match its generator
+        # docs/demo.svg is generated and committed. Editing make-demo.py without
+        # re-running it would leave the README showing stale CLI output.
+        run: |
+          python3 docs/make-demo.py
+          git diff --exit-code docs/demo.svg
+
+  site:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - run: npm run lint
+      - run: npx tsc --noEmit
+
+      - name: The og:image needs its fonts committed
+        # Satori never sees next/font, so opengraph-image.tsx reads these off
+        # disk. Missing, they fail the build anyway — but as an ENOENT thrown
+        # inside a prerender worker. This says why in one line instead.
+        run: |
+          test -f assets/fonts/space-grotesk-600.ttf
+          test -f assets/fonts/jetbrains-mono-400.ttf
+          test -f assets/fonts/jetbrains-mono-700.ttf
+
+      - name: Build
+        run: npm run build
+
+      - name: The og:image must render as a real 1280x640 PNG
+        run: |
+          npx next start -p 3111 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3111/opengraph-image -o /tmp/og.png && break
+            sleep 1
+          done
+          file /tmp/og.png
+          file /tmp/og.png | grep -q 'PNG image data, 1280 x 640'
+          test "$(wc -c < /tmp/og.png)" -gt 10000

@@ -16,7 +16,7 @@ The read-only guarantee is the hard requirement: nightshift promises it never
 writes to your code, so an adapter that cannot *enforce* read-only at the CLI
 level should not be merged. See ``claude_code.py`` for the reference shape.
 
-https://github.com/stony-lab/nightshift/issues
+https://github.com/kishormorol/nightshift/issues
 """
 
 from __future__ import annotations

@@ -3,13 +3,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "nightshift"
+# The distribution name, not the command. PyPI's `nightshift` is Ian Fucci's
+# NMR plotting tool, so the package installs as `nightshift-cli` while the
+# console script below stays `nightshift` — the two are independent.
+name = "nightshift-cli"
 version = "0.1.0"
 description = "Your AI works the night shift — read-only reviews of your projects while you're busy, one digest every morning."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "stony-lab" }]
+authors = [{ name = "Md. Kishor Morol" }]
 keywords = ["ai", "code-review", "claude-code", "automation", "cli"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -33,8 +36,8 @@ dev = ["pytest>=7.4", "pytest-cov>=4.1"]
 nightshift = "nightshift.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/stony-lab/nightshift"
-Source = "https://github.com/stony-lab/nightshift"
+Homepage = "https://github.com/kishormorol/nightshift"
+Source = "https://github.com/kishormorol/nightshift"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nightshift"]

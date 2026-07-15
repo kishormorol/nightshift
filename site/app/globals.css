@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+/* Design tokens lifted from the "soft nocturnal" direction (2b) of the
+   Nightshift identity board, as refined in turn 3: indigo glow + moon amber
+   on navy. */
+@theme {
+  --color-ink: #06090f;
+  --color-navy-900: #080c1a;
+  --color-navy-850: #0a0f20;
+  --color-navy-800: #0b1122;
+  --color-navy-700: #0d1326;
+  --color-navy-600: #0f1730;
+  --color-navy-500: #131b38;
+  --color-navy-400: #18223f;
+
+  --color-line-900: #131a30;
+  --color-line-800: #161d33;
+  --color-line-700: #1c243f;
+  --color-line-600: #232b47;
+  --color-line-500: #263050;
+  --color-line-400: #2a3357;
+
+  --color-accent: #8b9bff;
+  --color-accent-soft: #9db0ff;
+  --color-moon: #ffd79a;
+
+  --color-fg: #eef1ff;
+  --color-fg-muted: #cdd6f4;
+  --color-fg-dim: #8593b8;
+  --color-fg-faint: #6472a0;
+  --color-fg-fainter: #5f6c80;
+  --color-fg-ghost: #4a5680;
+
+  --color-ok: #6fdd8b;
+  --color-warn: #f0a35e;
+  --color-bad: #ff8b84;
+
+  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --animate-blink: blink 1.1s step-end infinite;
+  --animate-rec: blink 1.4s step-end infinite;
+  --animate-floaty: floaty 6s ease-in-out infinite;
+  --animate-flow: flow 3.4s linear infinite;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes flow {
+  0% {
+    left: 2%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    left: 98%;
+    opacity: 0;
+  }
+}
+
+/* The board is dark-only by design — a nocturnal brand that repaints itself
+   white at 8am is telling on itself. Declared so form controls and scrollbars
+   follow. */
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: radial-gradient(120% 80% at 50% -10%, #0c1220 0%, var(--color-ink) 60%);
+  background-attachment: fixed;
+  color: var(--color-fg-muted);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+/* The board shipped a "reduce motion" tweak; honour the OS setting instead.
+   The terminal keeps advancing — that is content, not decoration — but the
+   blinking, drifting and pulsing all stop. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Decorative starfield, drawn with gradients: no requests, nothing to block
+   paint, and it scales to any container. */
+.starfield {
+  background-image:
+    radial-gradient(1px 1px at 12% 22%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 82% 16%, rgba(255, 215, 154, 0.55), transparent),
+    radial-gradient(1px 1px at 60% 12%, rgba(139, 155, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 30% 62%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 90% 55%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 45% 82%, rgba(160, 200, 255, 0.4), transparent);
+}
+
+/* The mark: a circle lit from one side by an inset shadow. No SVG, and it
+   holds its shape from a 16px favicon up to the 64px lockup because every
+   value is in em. */
+.moon {
+  border-radius: 9999px;
+  box-shadow:
+    inset -0.28em -0.07em 0 0 var(--color-moon),
+    0 0 0.65em -0.1em rgba(255, 215, 154, 0.5);
+}

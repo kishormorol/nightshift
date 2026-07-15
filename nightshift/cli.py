@@ -84,7 +84,7 @@ def _render_config(
     digest_dir: Path,
 ) -> str:
     lines: list[str] = [
-        "# nightshift config — https://github.com/stony-lab/nightshift",
+        "# nightshift config — https://github.com/kishormorol/nightshift",
         "# Edit freely; `nightshift status` validates it.",
         "",
         "providers:",

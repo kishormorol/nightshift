@@ -9,11 +9,17 @@
 
 **v1 goals:** cron-driven scheduler, budget guardrails, working Claude Code
 adapter (read-only enforced), round-robin project/task queue, daily markdown
-digest, `init/run/digest/status` CLI, tests that spend zero quota.
+digest, `init/run/digest/status` CLI, tests that spend zero quota, and a
+landing page + `og:image` built from the identity board (see "Landing page").
 
 **Explicitly out of scope for v1:** token-level accounting, web dashboard,
 Slack/email delivery, any write-mode, working Codex/Copilot adapters (ship as
-documented stubs marked "help wanted"), landing page.
+documented stubs marked "help wanted").
+
+> **Amended:** the landing page was originally out of scope for v1 and was
+> added later, after the CLI was implemented. It ships in `site/` and is
+> independent of the Python package — the wheel does not contain it and the
+> CLI does not depend on it.
 
 ## Tech
 
@@ -36,19 +42,32 @@ nightshift/
 │   ├── budget.py        # per-provider run ledger
 │   ├── queue.py         # persistent round-robin (project, task) queue
 │   ├── report.py        # store RunResults, render digest
+│   ├── store.py         # atomic JSON state writes
+│   ├── lock.py          # lockfile, breaks stale locks
+│   ├── prompts.py       # prompt template resolution
+│   ├── cron.py          # crontab entries
+│   ├── prompts/         # shipped templates — see note below
+│   │   ├── code_review.md
+│   │   ├── security_audit.md
+│   │   ├── deps_audit.md
+│   │   ├── docs_drift.md
+│   │   └── dead_links.md
 │   └── adapters/
 │       ├── base.py      # Adapter protocol + RunResult
 │       ├── claude_code.py
 │       ├── codex.py     # stub: raises NotImplementedError, docstring "help wanted"
 │       └── copilot.py   # stub: same
-├── prompts/
-│   ├── code_review.md
-│   ├── security_audit.md
-│   ├── deps_audit.md
-│   ├── docs_drift.md
-│   └── dead_links.md
+├── docs/RECORDING.md    # how to shoot the README hero GIF
+├── site/                # the landing page (see "Landing page")
 └── tests/
 ```
+
+> **Amended:** prompt templates live in `nightshift/prompts/` rather than a
+> top-level `prompts/`. A top-level directory is not package data and would not
+> survive `pipx install`, which makes every task unresolvable for exactly the
+> users who installed the documented way. User templates still override the
+> shipped ones from `~/.nightshift/prompts/`, so the "drop in a `.md`, get a
+> task" contract below is unchanged. CI asserts the wheel carries them.
 
 ## State & files
 
@@ -164,8 +183,10 @@ call to summarize in v1.
 
 ## Prompt templates
 
-Markdown files in `prompts/`; users can add their own (any `.md` in the dir is
-a valid task name). Each template must instruct the model to: only read, never
+Markdown files. Resolved from `~/.nightshift/prompts/` first, then the
+templates shipped in `nightshift/prompts/` — so any `.md` in either directory
+is a valid task name, and a user file shadows a shipped one of the same name.
+Each template must instruct the model to: only read, never
 modify; output findings as a markdown list; prefix each finding with
 `HIGH|MED|LOW`; include `file:line` repo-relative references; give a one-line
 recommendation per finding; say "No findings." if clean.
@@ -193,14 +214,40 @@ conditions.
 - Claude Code adapter tested with mocked `subprocess`.
 - Cover: window crossing midnight, idle detection, both budget caps, retry-once,
   stale lock recovery, digest rendering incl. empty day and all-failed day.
-- GitHub Actions CI running pytest.
+- GitHub Actions CI running pytest, and building the wheel + the landing page.
+  The suite must never spawn a real process: an autouse fixture fails any test
+  that tries, because a leak here is silent — it still passes, just slower and
+  billed to a live subscription.
+
+## Landing page
+
+Lives in `site/` (Next.js App Router + Tailwind). Built from the Nightshift
+identity board, turn 3: the "soft nocturnal" direction refined into `3a` (the
+page) and `3b` (the 1280×640 `og:image`). Every route prerenders static.
+
+It is deliberately a sibling of the Python package, not part of it: the wheel
+does not ship it and the CLI does not import it. `pyproject.toml` packages only
+`nightshift`.
+
+**The page may only claim what the tool does.** The board is a mockup and a
+mockup can promise anything; a published page is a claim. Concretely, and
+non-negotiably:
+
+- No provider is advertised as working until its adapter actually runs. Codex
+  and Copilot are drawn as stubs and captioned as such. If one ships, flip
+  `ready` in `components/pipeline.tsx` — do not restore the board's wording.
+- No fabricated metrics. The board's "★ 2.4k" is not on the page and no star
+  count, download count, or user count goes on it that isn't real and sourced.
+- Sample output must match what the CLI actually prints.
+
+`site/README.md` records each departure from the board and why.
 
 ## README requirements
 
 GIF/asciinema placeholder above the fold, then exactly:
 
 ```bash
-pipx install nightshift
+pipx install nightshift-cli
 nightshift init
 nightshift run --now
 ```

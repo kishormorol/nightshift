@@ -5,12 +5,13 @@ import {
   BUDGET_PER_DAY,
   HOLD_BEATS,
   LINE_COLOR,
+  LINE_INDENT,
   LINE_MS,
   RUN_SCRIPT,
 } from "@/lib/run-script";
 
 /**
- * The fake-live terminal. Replays a scripted `nightshift run` on a loop.
+ * The fake-live terminal. Replays a recorded `nightshift watch` on a loop.
  *
  * It renders the finished frame on the server and during the first paint, so
  * the hero is never an empty box: crawlers, RSS readers and anyone whose JS
@@ -46,36 +47,44 @@ export function HeroTerminal() {
           <span className="size-2.5 rounded-full bg-line-500" />
         </div>
         <span className="font-mono text-[11px] text-fg-fainter">
-          nightshift run — live
+          nightshift watch
         </span>
-        <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] text-bad">
-          <span className="size-[7px] animate-rec rounded-full bg-[#ff5b52]" />
-          REC
+        <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] text-ok">
+          <span className="size-[7px] animate-rec rounded-full bg-[#6fdd8b]" />
+          LIVE
         </span>
       </div>
 
-      <div className="px-4 pt-4 pb-3.5 font-mono text-[13px] sm:min-h-[210px]">
+      <div className="px-4 pt-4 pb-3.5 font-mono text-[13px] sm:min-h-[268px]">
         <div className="mb-2 text-fg-fainter">
-          <span className="text-accent">$</span> nightshift run
+          <span className="text-accent">$</span> nightshift watch
         </div>
 
         {/* The run is a log, and a log read by a screen reader mid-replay is
             noise — announce nothing, and expose the finished transcript below. */}
         <div aria-hidden="true">
           {lines.map((line, i) => (
-            <div key={i} className="flex gap-3 py-[2.5px] leading-[1.4]">
-              <span className="flex-none text-fg-ghost">[{line.t}]</span>
+            <div
+              key={i}
+              className={`${LINE_INDENT[line.kind]} py-[2.5px] leading-[1.45] ${
+                line.kind === "meta" && i > 0 ? "mt-2.5" : ""
+              }`}
+            >
               <span
-                className="min-w-0 break-words"
+                className="break-words"
                 style={{ color: LINE_COLOR[line.kind] }}
               >
                 {line.msg}
               </span>
+              {line.detail ? (
+                <span className="ml-1.5 break-words text-fg-ghost">
+                  {line.detail}
+                </span>
+              ) : null}
             </div>
           ))}
-          <div className="flex gap-3 py-[2.5px]">
-            <span className="text-fg-ghost">[live]</span>
-            <span className="inline-block h-4 w-[9px] animate-blink bg-accent" />
+          <div className="py-[2.5px]">
+            <span className="inline-block h-4 w-[9px] animate-blink bg-accent align-text-bottom" />
           </div>
         </div>
 
@@ -83,10 +92,12 @@ export function HeroTerminal() {
       </div>
 
       <p className="sr-only">
-        A recorded nightshift run. It reviews gradagent and payments-web, finds
-        a high-severity issue at api/auth.py line 142 where JWT tokens never
-        expire, a medium-severity unbounded retry loop at worker/queue.py line
-        88, spends 3 of its 6 daily runs, and queues the digest for 06:00.
+        A recorded nightshift watch session. At 02:14 it audits gradagent for
+        security issues and reports a high-severity finding at api/auth.py line
+        142, where JWT tokens never expire. At 03:09 it reviews payments-web and
+        reports a medium-severity finding at worker/queue.py line 88, a retry
+        loop with no ceiling. Both runs finish while nobody is watching, and
+        together they spend 2 of the 6 runs allowed per day.
       </p>
     </div>
   );

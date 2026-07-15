@@ -321,10 +321,18 @@ class ClaudeCodeAdapter:
             return finish("failed", "", f"could not start `{self.binary}`: {exc}")
 
         timed_out = threading.Event()
+        guard = threading.Lock()
+        reaped = False
 
         def on_deadline() -> None:
-            timed_out.set()
-            _kill_tree(proc)
+            # The timer races the normal exit. Once the process has been
+            # waited for, its pid can be reused — killing "it" would then
+            # SIGKILL an unrelated process group.
+            with guard:
+                if reaped or proc.poll() is not None:
+                    return
+                timed_out.set()
+                _kill_tree(proc)
 
         timer = threading.Timer(timeout_s, on_deadline)
         timer.daemon = True
@@ -351,8 +359,19 @@ class ClaudeCodeAdapter:
                     _emit(on_event, event)
         finally:
             timer.cancel()
+            with guard:
+                # Past this point on_deadline must not touch the process:
+                # we are about to reap it and free its pid.
+                reaped = True
             proc.wait()
             drain.join(timeout=2)
+            # Close the pipes rather than leaving them to the collector.
+            for pipe in (proc.stdout, proc.stderr):
+                try:
+                    if pipe is not None:
+                        pipe.close()
+                except OSError:
+                    pass
 
         # Whatever the CLI managed to say before the deadline is still worth
         # keeping — the run was billed either way.

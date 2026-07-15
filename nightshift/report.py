@@ -72,6 +72,62 @@ def normalise_severity(token: str) -> str | None:
     return _SEVERITY_ALIASES.get(token.strip().upper().strip(":-—–"))
 
 
+def parse_finding_line(
+    line: str,
+    project: str = "",
+    task: str = "",
+    provider: str = "",
+) -> Finding | None:
+    """One markdown list item as a :class:`Finding`, or ``None``.
+
+    Split out of :func:`parse_findings` so a live view can classify a line the
+    instant it arrives and still agree with the digest — one severity model,
+    not two that drift.
+    """
+    item = _LIST_ITEM.match(line)
+    if not item:
+        return None
+    body = _LEADING_EMOJI.sub("", item.group("body")).strip()
+    if not body:
+        return None
+
+    severity = "LOW"
+    match = _SEVERITY_PREFIX.match(body)
+    if match:
+        candidate = normalise_severity(match.group("sev"))
+        if candidate:
+            severity = candidate
+            body = body[match.end():].strip()
+
+    ref_match = _FILE_REF.search(body)
+    ref = ref_match.group("ref") if ref_match else ""
+    body = _LEADING_EMOJI.sub("", body).strip(" -–—:")
+    # The documented format leads with the ref, and we render it separately
+    # — keeping it inline too would print the path twice on every line. The
+    # model almost always writes it as `code`, so match through the markup
+    # rather than only against a bare path.
+    if ref:
+        lead = re.match(
+            r"^[`*_]*" + re.escape(ref) + r"[`*_]*\s*[-–—:]*\s*",
+            body,
+        )
+        if lead:
+            body = body[lead.end() :].strip(" -–—:")
+    if not body:
+        # A finding that was *only* a file ref still deserves to be seen.
+        body = ref
+    if not body:
+        return None
+    return Finding(
+        severity=severity,
+        text=body,
+        project=project,
+        task=task,
+        provider=provider,
+        ref=ref,
+    )
+
+
 def parse_findings(result: RunResult) -> list[Finding]:
     """Pull structured findings out of an adapter's markdown.
 
@@ -85,43 +141,9 @@ def parse_findings(result: RunResult) -> list[Finding]:
 
     findings: list[Finding] = []
     for line in text.splitlines():
-        item = _LIST_ITEM.match(line)
-        if not item:
-            continue
-        body = _LEADING_EMOJI.sub("", item.group("body")).strip()
-        if not body:
-            continue
-
-        severity = "LOW"
-        match = _SEVERITY_PREFIX.match(body)
-        if match:
-            candidate = normalise_severity(match.group("sev"))
-            if candidate:
-                severity = candidate
-                body = body[match.end():].strip()
-
-        ref_match = _FILE_REF.search(body)
-        ref = ref_match.group("ref") if ref_match else ""
-        body = _LEADING_EMOJI.sub("", body).strip(" -–—:")
-        # The documented format leads with the ref, and we render it separately
-        # — keeping it inline too would print the path twice on every line.
-        if ref and body.startswith(ref):
-            body = body[len(ref) :].strip(" -–—:")
-        if not body:
-            # A finding that was *only* a file ref still deserves to be seen.
-            body = ref
-        if not body:
-            continue
-        findings.append(
-            Finding(
-                severity=severity,
-                text=body,
-                project=result.project,
-                task=result.task,
-                provider=result.provider,
-                ref=ref,
-            )
-        )
+        finding = parse_finding_line(line, result.project, result.task, result.provider)
+        if finding is not None:
+            findings.append(finding)
     return findings
 
 

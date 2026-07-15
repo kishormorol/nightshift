@@ -11,6 +11,7 @@ import logging
 import shutil
 import sys
 import textwrap
+import time
 from datetime import date, datetime
 from pathlib import Path
 
@@ -18,7 +19,7 @@ import click
 
 from nightshift import __version__
 from nightshift import adapters as adapter_registry
-from nightshift import cron, prompts, report, scheduler
+from nightshift import cron, events, prompts, report, scheduler
 from nightshift.adapters.base import Event
 from nightshift.budget import Ledger
 from nightshift.config import (
@@ -57,6 +58,43 @@ def _echo_quiet(message: str) -> None:
     click.echo(message)
 
 
+#: Wrapped lines of narration shown per text block. The agent explains itself
+#: at length and every word of it reaches the digest; what a live view needs
+#: is the shape of the run, so the prose is topped and tailed here.
+PROSE_LINES = 2
+
+#: Terminal colour per severity, alongside the digest's emoji.
+_SEVERITY_FG = {"HIGH": "red", "MED": "yellow", "LOW": "cyan"}
+
+
+def _wrap_width() -> int:
+    return max(min(shutil.get_terminal_size((80, 24)).columns, 100) - 4, 40)
+
+
+def _clip(text: str, width: int) -> str:
+    text = " ".join(text.split())
+    return text if len(text) <= width else text[: width - 1] + "…"
+
+
+def _echo_finding(finding, width: int) -> None:
+    """One finding, one line — severity first, because that is what ranks it."""
+    head = f"  {finding.emoji} {finding.severity:<4} "
+    ref = f"{finding.ref} · " if finding.ref else ""
+    body = _clip(f"{ref}{finding.text}", max(width - len(head) + 2, 24))
+    click.echo(head + click.style(body, fg=_SEVERITY_FG.get(finding.severity)))
+
+
+def _echo_prose(lines: list[str], width: int) -> None:
+    if not lines:
+        return
+    wrapped = textwrap.wrap(" ".join(lines), width=width)
+    for line in wrapped[:PROSE_LINES]:
+        click.echo(click.style(f"    {line}", dim=True))
+    if len(wrapped) > PROSE_LINES:
+        click.echo(click.style("    …", dim=True))
+    lines.clear()
+
+
 def _render_event(event: Event) -> None:
     """Print one adapter event, Claude-Code style.
 
@@ -77,15 +115,23 @@ def _render_event(event: Event) -> None:
 
     elif event.kind == "tool_result":
         if event.text:
-            click.echo(click.style(f"    ⎿  {event.text}", dim=True))
+            click.echo(click.style(f"    ⎿  {_clip(event.text, _wrap_width())}", dim=True))
 
     elif event.kind == "text":
-        width = min(shutil.get_terminal_size((80, 24)).columns, 100) - 4
-        for paragraph in event.text.splitlines():
-            if not paragraph.strip():
+        width = _wrap_width()
+        prose: list[str] = []
+        for raw in event.text.splitlines():
+            if not raw.strip():
                 continue
-            for line in textwrap.wrap(paragraph, width=max(width, 40)) or [""]:
-                click.echo(f"    {line}")
+            finding = report.parse_finding_line(raw)
+            if finding is None:
+                prose.append(raw.strip())
+                continue
+            # Keep the order the agent wrote in: whatever it said before this
+            # finding belongs above it, not collected at the end.
+            _echo_prose(prose, width)
+            _echo_finding(finding, width)
+        _echo_prose(prose, width)
 
     elif event.kind == "error":
         click.echo(click.style(f"  ✗ {event.text}", fg="red"))
@@ -318,6 +364,94 @@ def run(force: bool, provider: str | None, stream: bool | None, verbose: bool) -
                 if findings
                 else "         no findings"
             )
+
+
+# --------------------------------------------------------------- watch
+
+
+def _fmt_secs(seconds: float) -> str:
+    seconds = int(seconds)
+    return f"{seconds}s" if seconds < 60 else f"{seconds // 60}m{seconds % 60:02d}s"
+
+
+def _render_log_event(payload: dict) -> None:
+    """Render one line from an event log, as `watch` sees it."""
+    kind = payload.get("kind", "")
+
+    if kind == "meta":
+        started = str(payload.get("started_at", ""))[11:19]
+        head = f"{payload.get('project', '?')} · {payload.get('task', '?')}"
+        attempt = payload.get("attempt", 1)
+        if isinstance(attempt, int) and attempt > 1:
+            head += f"  retry {attempt - 1}"
+        click.echo()
+        click.echo(
+            click.style("┌ ", fg="blue")
+            + click.style(head, bold=True)
+            + click.style(f"   {payload.get('provider', '?')} · {started}", dim=True)
+        )
+        return
+
+    if kind == "end":
+        status = str(payload.get("status", "?"))
+        colour = {"ok": "green", "failed": "red", "timeout": "yellow"}.get(status, "white")
+        mark = {"ok": "✓", "failed": "✗", "timeout": "⧗"}.get(status, "·")
+        findings = payload.get("findings", 0)
+        tail = f"{findings} finding{'' if findings == 1 else 's'}"
+        if payload.get("detail"):
+            tail += f" · {payload['detail']}"
+        click.echo(
+            click.style("└ ", fg="blue")
+            + click.style(f"{mark} {status}", fg=colour, bold=True)
+            + click.style(f"   {_fmt_secs(payload.get('duration_s', 0))} · {tail}", dim=True)
+        )
+        return
+
+    _render_event(
+        Event(
+            kind=kind,  # type: ignore[arg-type]
+            text=str(payload.get("text", "")),
+            tool=str(payload.get("tool", "")),
+            detail=str(payload.get("detail", "")),
+        )
+    )
+
+
+@main.command()
+@click.option("-n", "--history", default=1, help="Replay this many finished runs first.")
+def watch(history: int) -> None:
+    """Follow runs as they happen, including ones cron started."""
+    click.echo(click.style("nightshift · watching for runs — ctrl-c to stop", dim=True))
+
+    seen: set[Path] = set()
+
+    if history > 0:
+        for path in reversed(events.recent_logs(limit=history)):
+            seen.add(path)
+            for payload in events.read(path):
+                _render_log_event(payload)
+
+    # Anything already on disk that we did not just replay is history too;
+    # marking it seen keeps `watch` from re-rendering old runs on startup.
+    # A log with no `end` is only worth following if it is still being
+    # written — an interrupted run leaves one behind forever, and following
+    # that would wedge the watcher instead of showing the next real run.
+    for path in events.recent_logs(limit=200):
+        if events.is_finished(path) or events.is_stale(path):
+            seen.add(path)
+
+    try:
+        while True:
+            fresh = [p for p in events.recent_logs(limit=20) if p not in seen]
+            if not fresh:
+                time.sleep(events.POLL_S)
+                continue
+            for path in reversed(fresh):
+                seen.add(path)
+                for payload in events.follow(path):
+                    _render_log_event(payload)
+    except KeyboardInterrupt:
+        click.echo(click.style("\nstopped watching.", dim=True))
 
 
 # -------------------------------------------------------------- digest

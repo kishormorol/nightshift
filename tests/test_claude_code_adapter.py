@@ -5,6 +5,7 @@ Nothing here launches a real CLI or spends a token.
 
 from __future__ import annotations
 
+import io
 import json
 import subprocess
 from datetime import datetime, timedelta
@@ -316,15 +317,22 @@ def test_directory_mtimes_count_as_human_use(adapter, tmp_path, monkeypatch):
 
 
 class FakePopen:
-    """Just enough Popen to drive the streaming reader."""
+    """Just enough Popen to drive the streaming reader.
+
+    The streams are ``StringIO`` rather than plain iterators so they behave
+    like the real pipes: iterable, and closeable on the way out.
+    """
 
     def __init__(self, lines, returncode=0, stderr_lines=()):
-        self.stdout = iter(lines)
-        self.stderr = iter(stderr_lines)
+        self.stdout = io.StringIO("".join(lines))
+        self.stderr = io.StringIO("".join(stderr_lines))
         self.returncode = returncode
         self.pid = 424242
 
     def wait(self):
+        return self.returncode
+
+    def poll(self):
         return self.returncode
 
     def kill(self):

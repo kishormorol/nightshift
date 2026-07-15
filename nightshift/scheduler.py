@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
 from nightshift import adapters as adapter_registry
-from nightshift import prompts, report
+from nightshift import events, prompts, report
 from nightshift.adapters.base import Adapter, OnEvent, RunResult
 from nightshift.budget import Ledger
 from nightshift.config import Config, Project, Provider
@@ -163,6 +163,20 @@ def choose_provider(
     )
 
 
+def _tee(*sinks: OnEvent | None) -> OnEvent:
+    """Fan one event out to the event log and, if attended, the renderer."""
+    live = [s for s in sinks if s is not None]
+
+    def fan(event) -> None:
+        for sink in live:
+            try:
+                sink(event)
+            except Exception:  # noqa: BLE001 - a sink must not fail a run
+                log.debug("event sink raised", exc_info=True)
+
+    return fan
+
+
 def _attempt(
     adapter: Adapter,
     prompt: str,
@@ -244,6 +258,7 @@ def run_once(
         return Outcome(False, choice.reason, results=choice.skips)
 
     # 4. Lock.
+    events.prune()
     lock = Lock(timeout_s=cfg.timeout_s)
     try:
         lock.acquire()
@@ -293,9 +308,27 @@ def run_once(
             return Outcome(True, str(exc), results=results)
 
         for attempt in range(1, MAX_ATTEMPTS + 1):
-            result = _attempt(
-                choice.adapter, prompt, project, task, cfg.timeout_s, attempt, on_event
+            # Every run publishes, attended or not: `nightshift watch` is a
+            # separate process and cannot subscribe to a callback in this one.
+            event_log = events.EventLog.open(
+                project.name, task, choice.provider.name, _now(), attempt
             )
+            try:
+                result = _attempt(
+                    choice.adapter,
+                    prompt,
+                    project,
+                    task,
+                    cfg.timeout_s,
+                    attempt,
+                    _tee(event_log.write, on_event),
+                )
+            except BaseException:
+                # Ctrl-C and the like: leave the log unfinished, which is the
+                # truth — the run did not end, it was interrupted.
+                event_log.close_quietly()
+                raise
+            event_log.finish(result, len(report.parse_findings(result)))
             # Spend is recorded before the report is written: if the disk is
             # full we would rather lose the findings than lose the count.
             if result.billed:

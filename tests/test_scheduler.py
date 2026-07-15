@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from nightshift import report, scheduler
+from nightshift import events, report, scheduler
 from nightshift.budget import Ledger
 from nightshift.lock import Lock
 from nightshift.queue import Queue
@@ -422,3 +422,46 @@ def test_ledger_is_pruned_on_every_run(night_cfg, get_fake, tmp_path):
     ledger.increment("claude_code", datetime(2026, 1, 1))
     run(night_cfg, get_fake, ledger=ledger)
     assert ledger.count("claude_code", "2026-01-01") == 0
+
+
+# ---- event logs -------------------------------------------------------
+
+
+def test_a_run_publishes_an_event_log(night_cfg, get_fake):
+    # cron's runs are the ones worth watching, and cron passes no renderer —
+    # so publishing must not depend on anyone being attached.
+    run(night_cfg, get_fake)
+
+    logs = events.recent_logs()
+    assert len(logs) == 1
+    payloads = events.read(logs[0])
+    assert payloads[0]["kind"] == "meta"
+    assert payloads[0]["task"] == "code_review"
+    assert payloads[-1]["kind"] == "end"
+    assert payloads[-1]["status"] == "ok"
+
+
+def test_the_event_log_records_the_real_outcome(night_cfg, get_fake, fake_adapter):
+    # Both attempts fail, so every log written should say so.
+    fake_adapter.results = [("failed", ""), ("failed", "")]
+    run(night_cfg, get_fake)
+
+    logs = events.recent_logs()
+    assert len(logs) == 2
+    assert {events.read(p)[-1]["status"] for p in logs} == {"failed"}
+
+
+def test_a_retry_gets_a_second_log(night_cfg, get_fake, fake_adapter):
+    fake_adapter.results = [("failed", ""), ("ok", "- LOW a.py:1 — x")]
+    run(night_cfg, get_fake)
+
+    assert len(events.recent_logs()) == 2
+
+
+def test_a_broken_renderer_does_not_fail_the_run(night_cfg, get_fake):
+    def explode(event):
+        raise RuntimeError("renderer bug")
+
+    outcome = run(night_cfg, get_fake, on_event=explode)
+
+    assert [r.status for r in outcome.results] == ["ok"]

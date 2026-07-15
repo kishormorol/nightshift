@@ -12,6 +12,7 @@ from nightshift.report import (
     dedupe,
     format_duration,
     load_results,
+    parse_finding_line,
     parse_findings,
     render_digest,
     store_result,
@@ -62,10 +63,49 @@ def test_leading_file_ref_is_not_repeated_in_the_text():
     assert "src/auth.py:142" not in f.text
 
 
+def test_a_backticked_leading_ref_is_not_repeated_either():
+    # What the model actually writes. The old check was `body.startswith(ref)`,
+    # which a backtick defeats — so every digest line carried the path twice.
+    [f] = parse_findings(result(findings_md="- HIGH `src/auth.py:142` — no expiry"))
+    assert f.ref == "src/auth.py:142"
+    assert f.text == "no expiry"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "- HIGH **src/auth.py:142** — no expiry",
+        "- HIGH `src/auth.py:142`: no expiry",
+        "- HIGH `src/auth.py:142` no expiry",
+    ],
+)
+def test_the_ref_is_stripped_through_whatever_markup_wraps_it(line):
+    [f] = parse_findings(result(findings_md=line))
+    assert f.text == "no expiry"
+
+
 def test_ref_mentioned_mid_sentence_is_left_alone():
     [f] = parse_findings(result(findings_md="- HIGH Tokens set in auth.py:142 never expire"))
     assert f.ref == "auth.py:142"
     assert f.text == "Tokens set in auth.py:142 never expire"
+
+
+def test_parse_finding_line_ignores_prose():
+    # A live view classifies line by line, so non-list prose must not become
+    # a finding just because it mentions a path.
+    assert parse_finding_line("I'll start by reading src/auth.py:142 now.") is None
+    assert parse_finding_line("") is None
+
+
+def test_parse_finding_line_agrees_with_parse_findings():
+    md = "- HIGH `src/auth.py:142` — no expiry"
+    [batch] = parse_findings(result(findings_md=md))
+    single = parse_finding_line(md)
+    assert (single.severity, single.ref, single.text) == (
+        batch.severity,
+        batch.ref,
+        batch.text,
+    )
 
 
 def test_a_finding_that_is_only_a_ref_still_survives():

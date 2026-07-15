@@ -7,9 +7,7 @@
 Put your idle Claude Code subscription to work — read-only reviews of your
 projects while you're busy, one digest every morning.
 
-![nightshift running](docs/demo.gif)
-
-<sub>_(placeholder — record it with [`docs/RECORDING.md`](docs/RECORDING.md))_</sub>
+![Two read-only reviews, then the morning digest](docs/demo.svg)
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)

@@ -56,6 +56,13 @@ jobs:
         run: |
           ! python -m zipfile -l dist/*.whl | grep -q 'site/'
 
+      - name: The README demo must match its generator
+        # docs/demo.svg is generated and committed. Editing make-demo.py without
+        # re-running it would leave the README showing stale CLI output.
+        run: |
+          python3 docs/make-demo.py
+          git diff --exit-code docs/demo.svg
+
   site:
     runs-on: ubuntu-latest
     defaults:

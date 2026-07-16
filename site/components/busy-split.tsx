@@ -30,13 +30,13 @@ export function BusySplit() {
         <SectionLabel>while you were busy</SectionLabel>
 
         <div className="flex gap-3.5">
-          {/* Wide enough for the icon plus "nightshift" at 12px mono — any
+          {/* Wide enough for the icon plus "nightaudit" at 12px mono — any
               narrower and the label truncates to "nights…". */}
           <div className="flex w-[116px] flex-none flex-col sm:w-[118px]">
             <div className="h-5" aria-hidden="true" />
             <RowLabel icon="◐" tone="text-accent-soft" bg="bg-line-700" name="you" />
             <div className="h-3" aria-hidden="true" />
-            <RowLabel icon="☾" tone="text-moon" bg="bg-navy-500" name="nightshift" />
+            <RowLabel icon="☾" tone="text-moon" bg="bg-navy-500" name="nightaudit" />
           </div>
 
           <div className="min-w-0 flex-1 overflow-x-auto">

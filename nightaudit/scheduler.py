@@ -1,6 +1,6 @@
 """The gate: decide whether to run, pick the work, run it, record it.
 
-``nightshift run`` fires from cron every hour and is expected to do nothing
+``nightaudit run`` fires from cron every hour and is expected to do nothing
 most of the time. Every refusal exits 0 with a single line of explanation —
 cron mail full of stack traces is how a tool gets uninstalled.
 """
@@ -11,15 +11,15 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
-from nightshift import adapters as adapter_registry
-from nightshift import checks, events, prompts, report
-from nightshift.adapters.base import Adapter, OnEvent, RunResult
-from nightshift.budget import Ledger
-from nightshift.config import Config, Project, Provider
-from nightshift.lock import Lock, LockBusy
-from nightshift.queue import Queue
+from nightaudit import adapters as adapter_registry
+from nightaudit import checks, events, prompts, report
+from nightaudit.adapters.base import Adapter, OnEvent, RunResult
+from nightaudit.budget import Ledger
+from nightaudit.config import Config, Project, Provider
+from nightaudit.lock import Lock, LockBusy
+from nightaudit.queue import Queue
 
-log = logging.getLogger("nightshift")
+log = logging.getLogger("nightaudit")
 
 #: A failed or timed-out run gets exactly one immediate retry. Both attempts
 #: count against budget, so this can never be more than one.
@@ -28,7 +28,7 @@ MAX_ATTEMPTS = 2
 
 @dataclass
 class Outcome:
-    """What one invocation of ``nightshift run`` did."""
+    """What one invocation of ``nightaudit run`` did."""
 
     ran: bool
     reason: str = ""
@@ -124,7 +124,7 @@ def usable_providers(
     which is not something to repeat per project.
 
     ``--now`` (``force``) skips the idle check but never the budget check —
-    budget is the promise that nightshift won't eat someone's quota.
+    budget is the promise that nightaudit won't eat someone's quota.
     """
     # Resolved here rather than as a default argument: a default would bind the
     # real registry at import time and quietly ignore any later patching.
@@ -392,7 +392,7 @@ def run_once(
             return Outcome(True, str(exc), results=results)
 
         for attempt in range(1, MAX_ATTEMPTS + 1):
-            # Every run publishes, attended or not: `nightshift watch` is a
+            # Every run publishes, attended or not: `nightaudit watch` is a
             # separate process and cannot subscribe to a callback in this one.
             event_log = events.EventLog.open(
                 project.name, task, choice.provider.name, _now(), attempt

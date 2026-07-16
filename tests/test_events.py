@@ -1,6 +1,6 @@
 """Event logs: the file a run writes so another process can watch it.
 
-``NIGHTSHIFT_HOME`` is redirected by an autouse fixture, so everything here
+``NIGHTAUDIT_HOME`` is redirected by an autouse fixture, so everything here
 lands in a tmp dir.
 """
 
@@ -12,8 +12,8 @@ import threading
 import time
 from datetime import date, datetime, timedelta
 
-from nightshift import events
-from nightshift.adapters.base import Event, RunResult
+from nightaudit import events
+from nightaudit.adapters.base import Event, RunResult
 
 
 def a_result(status="ok", findings="- LOW a.py:1 — x", duration=1.5, detail=""):

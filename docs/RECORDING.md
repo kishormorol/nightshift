@@ -14,7 +14,7 @@ of the repo, stays diffable in review, and needs no CDN.
 
 ## The screenshots
 
-`docs/shots/<name>.txt` is a transcript captured from a real `nightshift` run,
+`docs/shots/<name>.txt` is a transcript captured from a real `nightaudit` run,
 ANSI escapes and all. `make-shots.py` parses the escapes and renders each to a
 terminal window in `docs/img/<name>.svg`. To add one, drop in a `.txt` and add
 it to `SHOTS` with its title-bar caption.
@@ -26,7 +26,7 @@ real bugs: `claude_code.py:366` became 13c0d3f and `lock.py:121` became ff1ae5c.
 ### Capturing one
 
 The CLI colours output only at a TTY, so drive it through a pty rather than a
-pipe. `script -q /dev/null nightshift status > docs/shots/status.txt` covers the
+pipe. `script -q /dev/null nightaudit status > docs/shots/status.txt` covers the
 non-interactive commands; `watch` and `init` need a throwaway `pty.fork()`
 script that can feed them input and stop them.
 
@@ -34,8 +34,8 @@ Then, **before you commit it**:
 
 - **Scrub your home directory.** `/Users/you/projects/foo` → `~/projects/foo`.
   Check the digest path too — a careless prefix replace turns
-  `~/nightshift-reports` into `~/projects/nightshift-reports`.
-- **Use a throwaway `NIGHTSHIFT_HOME`** for anything that writes config, so
+  `~/nightaudit-reports` into `~/projects/nightaudit-reports`.
+- **Use a throwaway `NIGHTAUDIT_HOME`** for anything that writes config, so
   capturing a screenshot never touches your real setup.
 - **No real secrets, no private project names.**
 
@@ -49,7 +49,7 @@ whole lines or recapture; do not trim by rewriting what the CLI said.
 ## The hero
 
 The animation above the fold is the whole pitch: see it → want it → install in
-one paste. It sits directly above the `pipx install nightshift-cli` line, so
+one paste. It sits directly above the `pipx install nightaudit` line, so
 whatever it shows is the first thing a visitor learns about the tool.
 
 `make-demo.py` animates a trimmed transcript line by line. It is generated

@@ -10,9 +10,9 @@ import time as _time
 from dataclasses import dataclass
 from pathlib import Path
 
-from nightshift.config import state_dir
+from nightaudit.config import state_dir
 
-log = logging.getLogger("nightshift")
+log = logging.getLogger("nightaudit")
 
 #: How far past the longest legitimate run a lock may live before we presume
 #: its holder died. This multiplies the *whole* run budget — every attempt at
@@ -26,7 +26,7 @@ def lock_path() -> Path:
 
 
 class LockBusy(Exception):
-    """Another nightshift run holds the lock."""
+    """Another nightaudit run holds the lock."""
 
 
 @dataclass
@@ -155,11 +155,11 @@ class Lock:
                 self._held = True
                 return
             except FileExistsError:
-                raise LockBusy("another nightshift run just took the lock") from None
+                raise LockBusy("another nightaudit run just took the lock") from None
 
         if not self.is_stale(info):
             raise LockBusy(
-                f"another nightshift run is in progress (pid {info.pid}, "
+                f"another nightaudit run is in progress (pid {info.pid}, "
                 f"started {info.age_s:.0f}s ago)"
             )
 
@@ -168,7 +168,7 @@ class Lock:
             self._write()
             self._held = True
         except FileExistsError:
-            raise LockBusy("another nightshift run just took the lock") from None
+            raise LockBusy("another nightaudit run just took the lock") from None
 
     def break_stale(self) -> None:
         try:

@@ -1,6 +1,6 @@
-# nightshift.dev
+# nightaudit.dev
 
-The landing page, built from the **Nightshift visual identity** design board —
+The landing page, built from the **Nightaudit visual identity** design board —
 turn 3, the "soft nocturnal" direction (2b) as refined into `3a` (landing) and
 `3b` (social card).
 
@@ -31,7 +31,7 @@ actually does.
 
 1. **"Idle Claude Code, Codex & Copilot" → Claude Code only.** Codex and
    Copilot ship as documented stubs that raise `NotImplementedError`
-   (`nightshift/adapters/codex.py`). The pipeline draws them dashed and marked
+   (`nightaudit/adapters/codex.py`). The pipeline draws them dashed and marked
    `SOON`, and the caption says so outright.
 2. **"★ 2.4k" is gone.** It appeared four times on the board. Inventing a star
    count is fabricated social proof.

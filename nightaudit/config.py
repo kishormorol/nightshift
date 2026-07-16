@@ -1,4 +1,4 @@
-"""Load and validate ``~/.nightshift/config.yaml``.
+"""Load and validate ``~/.nightaudit/config.yaml``.
 
 Every failure raised from here is meant to be read by a human at a terminal, so
 messages name the offending field and say what a valid value looks like.
@@ -18,8 +18,8 @@ import yaml
 
 KNOWN_PROVIDERS = ("claude_code", "codex", "copilot")
 
-DEFAULT_STATE_DIR = Path("~/.nightshift")
-DEFAULT_DIGEST_DIR = Path("~/nightshift-reports")
+DEFAULT_STATE_DIR = Path("~/.nightaudit")
+DEFAULT_DIGEST_DIR = Path("~/nightaudit-reports")
 DEFAULT_WINDOWS = ("00:00-06:00",)
 DEFAULT_IDLE_MINUTES = 60
 DEFAULT_TIMEOUT_S = 600
@@ -43,8 +43,8 @@ def expand(p: str | Path) -> Path:
 
 
 def state_dir() -> Path:
-    """Where ledger/queue/lock/config live. Override with ``NIGHTSHIFT_HOME``."""
-    return expand(os.environ.get("NIGHTSHIFT_HOME", DEFAULT_STATE_DIR))
+    """Where ledger/queue/lock/config live. Override with ``NIGHTAUDIT_HOME``."""
+    return expand(os.environ.get("NIGHTAUDIT_HOME", DEFAULT_STATE_DIR))
 
 
 def config_path() -> Path:
@@ -73,8 +73,8 @@ class Check:
     """One command of the user's own, run in the project directory.
 
     Unlike a task — which is a prompt handed to a read-only AI — a check is
-    executed. nightshift makes no attempt to sandbox it: it runs as the user who
-    runs nightshift, with their permissions, and may write whatever it likes.
+    executed. nightaudit makes no attempt to sandbox it: it runs as the user who
+    runs nightaudit, with their permissions, and may write whatever it likes.
     ``pytest`` leaves ``.pytest_cache/`` behind because it was asked to.
     """
 
@@ -345,13 +345,13 @@ def _parse_projects(raw: Any) -> tuple[Project, ...]:
     if raw is None:
         raise ConfigError(
             "projects: no projects configured — add at least one, or run "
-            "`nightshift init`"
+            "`nightaudit init`"
         )
     if not isinstance(raw, list):
         raise ConfigError(f"projects: expected a list, got {_typename(raw)}")
     if not raw:
         raise ConfigError(
-            "projects: the list is empty — nightshift has nothing to review"
+            "projects: the list is empty — nightaudit has nothing to review"
         )
 
     projects: list[Project] = []
@@ -521,7 +521,7 @@ def load(path: Path | None = None) -> Config:
     path = path or config_path()
     if not path.exists():
         raise ConfigError(
-            f"no config at {path} — run `nightshift init` to create one"
+            f"no config at {path} — run `nightaudit init` to create one"
         )
     try:
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -530,7 +530,7 @@ def load(path: Path | None = None) -> Config:
     except OSError as exc:
         raise ConfigError(f"cannot read {path}: {exc}") from exc
     if raw is None:
-        raise ConfigError(f"{path} is empty — run `nightshift init` to populate it")
+        raise ConfigError(f"{path} is empty — run `nightaudit init` to populate it")
     try:
         return parse(raw, source=path)
     except ConfigError as exc:

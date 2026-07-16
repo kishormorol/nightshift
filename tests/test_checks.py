@@ -1,4 +1,4 @@
-"""The check runner — the one part of nightshift that executes rather than reads.
+"""The check runner — the one part of nightaudit that executes rather than reads.
 
 These tests spawn real processes (see the ``real_subprocess`` fixture). Every
 command is ``sys.executable``, so nothing needs installing and no quota is spent.
@@ -12,9 +12,9 @@ from datetime import datetime
 
 import pytest
 
-from nightshift import checks
-from nightshift.checks import CheckResult, run_check, run_checks, tail
-from nightshift.config import Check, Project
+from nightaudit import checks
+from nightaudit.checks import CheckResult, run_check, run_checks, tail
+from nightaudit.config import Check, Project
 
 AT = datetime(2026, 7, 14, 3, 0)
 

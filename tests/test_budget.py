@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 
-from nightshift.budget import Ledger, day_key, entry_date, week_key
-from nightshift.config import Budget
+from nightaudit.budget import Ledger, day_key, entry_date, week_key
+from nightaudit.config import Budget
 
 
 def test_week_key_uses_iso_weeks():

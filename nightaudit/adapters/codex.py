@@ -12,7 +12,7 @@ assumed, and two of them are load-bearing in ways worth stating:
 - ``--sandbox read-only`` is passed explicitly even though a fresh install
   already defaults to it, because the reference is explicit that ``--sandbox``
   "defaults to configuration settings". A user's ``~/.codex/config.toml``
-  setting ``workspace-write`` would otherwise silently become nightshift's
+  setting ``workspace-write`` would otherwise silently become nightaudit's
   default too. "It defaults to read-only" is a fact about a fresh machine, not
   a guarantee, and this product's whole claim rests on the difference.
 
@@ -36,16 +36,16 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
-from nightshift import sessions
-from nightshift.adapters._process import (
+from nightaudit import sessions
+from nightaudit.adapters._process import (
     clip,
     emit,
     stream_ndjson,
     summarize,
 )
-from nightshift.adapters.base import Availability, Event, OnEvent, RunResult
+from nightaudit.adapters.base import Availability, Event, OnEvent, RunResult
 
-#: The only sandbox nightshift will ever ask for. Not a default — an assertion.
+#: The only sandbox nightaudit will ever ask for. Not a default — an assertion.
 SANDBOX = "read-only"
 
 #: Never pause for a human: there isn't one, and a run that could ask for
@@ -160,7 +160,7 @@ class _Collector:
         elif item_type == "file_change" and done:
             # The tripwire. A read-only sandbox cannot let this happen, so if it
             # does, either the sandbox did not apply or it did not hold — and
-            # every claim nightshift makes about this provider is void for this
+            # every claim nightaudit makes about this provider is void for this
             # run. `status` matters: a *failed* file_change is the sandbox doing
             # its job and refusing a write, which is not an alarm.
             if str(item.get("status") or "") != "completed":
@@ -239,14 +239,14 @@ class CodexAdapter:
         as idle, not as busy.
 
         Our own runs write session files here too, so they are skipped — count
-        them and every run would gate the next one, and nightshift would put
+        them and every run would gate the next one, and nightaudit would put
         itself to sleep. Codex names these ``rollout-<timestamp>-<thread_id>``
         rather than after the id alone, so this matches on *containment* where
         the Claude adapter can compare the stem outright.
 
         Only files count. A directory's mtime bumps when anything inside it is
         written, including our own session, so it cannot be attributed to a
-        human once nightshift shares the tree.
+        human once nightaudit shares the tree.
         """
         root = self._sessions_dir()
         if not root.is_dir():
@@ -281,7 +281,7 @@ class CodexAdapter:
             SANDBOX,
             "--ask-for-approval",
             APPROVAL,
-            # nightshift registers directories, not repositories; codex exec
+            # nightaudit registers directories, not repositories; codex exec
             # refuses to run outside a git repo without this. The check exists
             # to protect uncommitted work from edits, which is not a risk we
             # have.

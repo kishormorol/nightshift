@@ -12,7 +12,7 @@ replaces.
 preference, it is the rule in SPEC.md ("Landing page"): sample output must
 match what the CLI actually prints. If you change `cli.py`'s output, re-run
 this. The transcript here was copied from a real run against a stub provider —
-real nightshift, real formatting, invented findings.
+real nightaudit, real formatting, invented findings.
 """
 
 from __future__ import annotations
@@ -48,21 +48,21 @@ TOP = 46
 #: is trimmed to the lines that carry the story; every line is one the CLI
 #: printed.
 TRANSCRIPT: list[tuple[str, str] | None] = [
-    ("$ nightshift run --now", ACCENT),
-    ("  ⏺ Read(file_path: nightshift/adapters/claude_code.py)", FAINT),
-    ("  ⏺ Read(file_path: nightshift/lock.py)", FAINT),
-    ("  🔴 HIGH nightshift/adapters/claude_code.py · 267 — Replace the…", HIGH),
-    ("  🟠 MED  nightshift/lock.py · 121 — Have `release()` re-read the…", MED),
-    ("     ok  nightshift · code_review (claude_code, 2m18s)", FG),
+    ("$ nightaudit run --now", ACCENT),
+    ("  ⏺ Read(file_path: nightaudit/adapters/claude_code.py)", FAINT),
+    ("  ⏺ Read(file_path: nightaudit/lock.py)", FAINT),
+    ("  🔴 HIGH nightaudit/adapters/claude_code.py · 267 — Replace the…", HIGH),
+    ("  🟠 MED  nightaudit/lock.py · 121 — Have `release()` re-read the…", MED),
+    ("     ok  nightaudit · code_review (claude_code, 2m18s)", FG),
     ("         7 findings", DIM),
     None,
-    ("$ nightshift status", ACCENT),
+    ("$ nightaudit status", ACCENT),
     ("  ✓ claude_code ▓░░░░░ 1/6 today · 1/30 week", FG),
     ("next run  Thu 00:00 (in 2h51m)", FAINT),
-    ("up next   nightshift · security_audit", FAINT),
+    ("up next   nightaudit · security_audit", FAINT),
     None,
-    ("$ nightshift digest", ACCENT),
-    ("~/nightshift-reports/DIGEST-2026-07-15.md  (1 run)", OK),
+    ("$ nightaudit digest", ACCENT),
+    ("~/nightaudit-reports/DIGEST-2026-07-15.md  (1 run)", OK),
 ]
 
 STEP = 0.62  # seconds between lines
@@ -125,15 +125,15 @@ def build() -> str:
         f'<circle cx="{PAD_X + 4 + i * 15}" cy="23" r="4.5" fill="{DOT}"/>' for i in range(3)
     )
 
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="A nightshift run: two read-only reviews, then status and digest.">
-<title>nightshift — two read-only reviews, then the morning digest</title>
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="A nightaudit run: two read-only reviews, then status and digest.">
+<title>nightaudit — two read-only reviews, then the morning digest</title>
 <style>{"".join(css)}</style>
 <rect width="{width}" height="{height}" rx="10" fill="{BG}"/>
 <rect width="{width}" height="{TOP - 1}" rx="10" fill="{CHROME}"/>
 <rect y="{TOP - 11}" width="{width}" height="10" fill="{CHROME}"/>
 <line x1="0" y1="{TOP - 1}" x2="{width}" y2="{TOP - 1}" stroke="{LINE}"/>
 {dots}
-<text class="t" x="{PAD_X + 56}" y="24" fill="{DIM}" font-size="11">nightshift — 0 files touched</text>
+<text class="t" x="{PAD_X + 56}" y="24" fill="{DIM}" font-size="11">nightaudit — 0 files touched</text>
 <text class="t" x="{width - PAD_X}" y="24" fill="{MOON}" font-size="11" text-anchor="end">☾</text>
 {chr(10).join(body)}
 </svg>

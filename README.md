@@ -1,15 +1,15 @@
 <div align="center">
 
-# nightshift
+# nightaudit
 
-**Your AI works the night shift.**
+**An audit doesn't change the books.**
 
 Put your idle Claude Code subscription to work — read-only reviews of your
 projects while you're busy, one digest every morning.
 
 ![A real code_review of this repo: two HIGH findings, then the morning digest](docs/demo.svg)
 
-[![PyPI](https://img.shields.io/pypi/v/nightshift-cli)](https://pypi.org/project/nightshift-cli/)
+[![PyPI](https://img.shields.io/pypi/v/nightaudit)](https://pypi.org/project/nightaudit/)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 
@@ -20,7 +20,7 @@ projects while you're busy, one digest every morning.
 ## What this is
 
 You already pay for Claude Code. It sits idle most of the day, and definitely
-all night. nightshift spends that idle time reviewing the projects you point it
+all night. nightaudit spends that idle time reviewing the projects you point it
 at, and leaves the results in one Markdown file you read with your coffee.
 
 It never edits your code. It has no daemon and no server — cron calls it, it
@@ -35,31 +35,31 @@ That's the whole tool. The rest of this page is how to use it.
 - **At least one AI CLI**, installed and already logged in — either
   [Claude Code](https://claude.com/claude-code) or
   [Codex](https://developers.openai.com/codex). Run `claude --version` or
-  `codex --version`; if that works, nightshift will find it. Have both and it
+  `codex --version`; if that works, nightaudit will find it. Have both and it
   will use both, each with its own budget.
 - **cron** — standard on macOS and Linux. Windows works via WSL.
 
-You do not need an API key. nightshift drives the same CLIs you use by hand, on
+You do not need an API key. nightaudit drives the same CLIs you use by hand, on
 the subscriptions you already have.
 
 ## Install it
 
 ```bash
-pipx install nightshift-cli
-nightshift --version
+pipx install nightaudit
+nightaudit --version
 ```
 
-(`uv tool install nightshift-cli` and `pip install nightshift-cli` work too;
+(`uv tool install nightaudit` and `pip install nightaudit` work too;
 pipx and uv just keep it out of your other environments. The command is
-`nightshift` either way.)
+`nightaudit` either way.)
 
 ## Set it up
 
-Run `nightshift init` once. It finds your AI CLIs, asks which projects to
+Run `nightaudit init` once. It finds your AI CLIs, asks which projects to
 review and when, writes a config file, and offers to install the cron lines
 that drive everything:
 
-![nightshift init walks you through detection, projects, schedule, and cron](docs/img/init.svg)
+![nightaudit init walks you through detection, projects, schedule, and cron](docs/img/init.svg)
 
 The project path is the only thing it needs from you. Everything else has a
 working default you can accept with Enter:
@@ -71,26 +71,26 @@ working default you can accept with Enter:
 | **tasks** | Which reviews to run on it. | `code_review, security_audit, deps_audit` |
 | **windows** | Hours it's allowed to run, local time. | `00:00-06:00` |
 | **idle minutes** | How long you must be away from Claude Code first. | `60` |
-| **digest dir** | Where the morning digest lands. | `~/nightshift-reports` |
+| **digest dir** | Where the morning digest lands. | `~/nightaudit-reports` |
 
-Everything it writes goes to `~/.nightshift/config.yaml`. Edit it by hand
-whenever you like — it's plain YAML, and `nightshift status` validates it.
+Everything it writes goes to `~/.nightaudit/config.yaml`. Edit it by hand
+whenever you like — it's plain YAML, and `nightaudit status` validates it.
 
 ## See it work
 
 Don't wait until tonight. Force a run right now:
 
 ```bash
-nightshift run --now
+nightaudit run --now
 ```
 
 `--now` skips the window and idle checks, so you get a review immediately. At a
-terminal, nightshift streams it live — you see the same reads and reasoning you
+terminal, nightaudit streams it live — you see the same reads and reasoning you
 would if you'd run `claude` yourself:
 
-![A live nightshift run: reads, reasoning, then seven findings ranked by severity](docs/img/watch.svg)
+![A live nightaudit run: reads, reasoning, then seven findings ranked by severity](docs/img/watch.svg)
 
-That is a real run of nightshift against its own repository, and those are real
+That is a real run of nightaudit against its own repository, and those are real
 bugs. Two of them became commits the same evening: a run that could hang forever
 holding the scheduler's lock (`claude_code.py:366`), and a lock that could be
 released by the wrong owner (`lock.py:121`).
@@ -101,12 +101,12 @@ so you can jump straight to it.
 ## Then forget about it
 
 If you let `init` install the cron lines, you're already done. Cron calls
-`nightshift run` every hour; the command decides for itself whether to act and
+`nightaudit run` every hour; the command decides for itself whether to act and
 exits quietly when the answer is no:
 
 ```
-0 * * * * ~/.local/bin/nightshift run    >> /tmp/nightshift-cron.log 2>&1
-30 7 * * * ~/.local/bin/nightshift digest >> /tmp/nightshift-cron.log 2>&1
+0 * * * * ~/.local/bin/nightaudit run    >> /tmp/nightaudit-cron.log 2>&1
+30 7 * * * ~/.local/bin/nightaudit digest >> /tmp/nightaudit-cron.log 2>&1
 ```
 
 The hourly line is the gated one; the 07:30 line renders yesterday's findings.
@@ -117,7 +117,7 @@ to a log because there is nowhere else for cron's output to go.
 A run happens only when **all four gates** open:
 
 1. **Window** — the clock is inside one of your `schedule.windows`.
-2. **Idle** — you haven't touched Claude Code for `idle_minutes`. nightshift
+2. **Idle** — you haven't touched Claude Code for `idle_minutes`. nightaudit
    watches `~/.claude/projects` and stays out of your way while you're working.
 3. **Budget** — you have runs left today and this week.
 4. **Lock** — no other run is already in flight.
@@ -125,7 +125,7 @@ A run happens only when **all four gates** open:
 Any gate saying no is normal, not an error. It prints one line and exits 0:
 
 ```
-$ nightshift run
+$ nightaudit run
 nothing to do — outside configured windows (00:00-06:00)
 ```
 
@@ -134,18 +134,18 @@ so every project gets its turn and a noisy one can't starve the rest.
 
 To check on it any time, ask:
 
-![nightshift status: budget bars, next window, what's up next, recent runs](docs/img/status.svg)
+![nightaudit status: budget bars, next window, what's up next, recent runs](docs/img/status.svg)
 
 And to watch a run that cron started — including one already in progress —
-`nightshift watch` follows along live and replays the last finished run first.
+`nightaudit watch` follows along live and replays the last finished run first.
 
 ## Read the digest
 
-Every run appends to `~/nightshift-reports/YYYY-MM-DD/`. Once a day
-`nightshift digest` renders those into one file, `DIGEST-YYYY-MM-DD.md`:
+Every run appends to `~/nightaudit-reports/YYYY-MM-DD/`. Once a day
+`nightaudit digest` renders those into one file, `DIGEST-YYYY-MM-DD.md`:
 
 ```markdown
-# Nightshift · morning digest
+# Nightaudit · morning digest
 
 Wed Jul 15, 2026 · generated 17:57 local · 1 project · 1 run
 
@@ -156,16 +156,16 @@ Wed Jul 15, 2026 · generated 17:57 local · 1 project · 1 run
 ## Highlights
 
 - 🔴 Replace the buffered `subprocess.run(..., timeout=...)` with the same `Popen` +
-  `os.killpg` treatment the streaming path uses … — _nightshift · code_review_ ·
-  `nightshift/adapters/claude_code.py:267`
+  `os.killpg` treatment the streaming path uses … — _nightaudit · code_review_ ·
+  `nightaudit/adapters/claude_code.py:267`
 - 🟠 Have `release()` re-read the lockfile and unlink only when the recorded pid is
-  still our own … — _nightshift · code_review_ · `nightshift/lock.py:121`
+  still our own … — _nightaudit · code_review_ · `nightaudit/lock.py:121`
 
 ## Run log
 
 | project | task | provider | status | dur | time |
 | --- | --- | --- | --- | --- | --- |
-| nightshift | code_review | claude_code | ok | 2m18s | 15:23 |
+| nightaudit | code_review | claude_code | ok | 2m18s | 15:23 |
 ```
 
 Highest severity first, grouped by project, read in twenty seconds.
@@ -178,14 +178,14 @@ information too, and silently dropping it is how you stop trusting the tool.
 Want it early, or for a specific day?
 
 ```bash
-nightshift digest                    # today, written to the digest dir
-nightshift digest --date 2026-07-14  # a past day
-nightshift digest --stdout           # print it instead of writing it
+nightaudit digest                    # today, written to the digest dir
+nightaudit digest --date 2026-07-14  # a past day
+nightaudit digest --stdout           # print it instead of writing it
 ```
 
 ## 0 files touched by the AI
 
-nightshift's entire value depends on being safe to leave unattended, so
+nightaudit's entire value depends on being safe to leave unattended, so
 read-only isn't a promise in the docs — it's enforced at the layer that
 actually executes tools.
 
@@ -208,21 +208,21 @@ Three things are true because of that:
   that isn't on it. There is no Edit, no Write, no shell.
 - **The denylist is belt-and-braces.** It exists so that a future CLI release
   adding a new write-capable tool to the defaults can't silently widen what
-  nightshift can do.
+  nightaudit can do.
 - **No fallback.** If the flags are rejected, the run fails and is logged as
-  failed. nightshift never retries an unrestricted invocation.
+  failed. nightaudit never retries an unrestricted invocation.
 
 The prompts reinforce it, but prompts are not a security boundary and aren't
 treated as one. The flags are.
 
-nightshift also never touches your git state: no commits, no branches, no
+nightaudit also never touches your git state: no commits, no branches, no
 pushes. Left to itself it reads, and writes exactly one place — the digest
 directory.
 
 ## Checks
 
 A task is a prompt for an AI that cannot write. A **check** is a command of
-your own, and nightshift runs it:
+your own, and nightaudit runs it:
 
 ```yaml
 projects:
@@ -256,7 +256,7 @@ digest with its exit code and the tail of its output:
 **A check is outside the sandbox, and that is the point.** The AI is held
 read-only by flags it cannot argue with. Your check is your command, run with
 your permissions: `pytest` writes `.pytest_cache/` because you told it to.
-nightshift does not sandbox it and does not pretend to.
+nightaudit does not sandbox it and does not pretend to.
 
 Two things worth knowing before you add one:
 
@@ -266,7 +266,7 @@ Two things worth knowing before you add one:
   script.
 - **`config.yaml` now executes.** Before checks it was inert data; anything that
   can write it can now run commands as you, from cron. That is inherent to
-  asking a config file to run your tests. `~/.nightshift/prompts/` never gained
+  asking a config file to run your tests. `~/.nightaudit/prompts/` never gained
   this property — a prompt is only ever text handed to a model.
 
 A check that fails, times out, or names a program that isn't installed is
@@ -275,7 +275,7 @@ were waiting for.
 
 ## Don't let it burn your quota
 
-nightshift runs on the subscription you already pay for, which means the
+nightaudit runs on the subscription you already pay for, which means the
 fastest way for it to become a problem is to burn through your quota. So it
 counts.
 
@@ -299,7 +299,7 @@ Start low. Six runs a day is already a lot of review.
 
 ## Configuration
 
-Lives at `~/.nightshift/config.yaml`. Here it is in full — this is every knob
+Lives at `~/.nightaudit/config.yaml`. Here it is in full — this is every knob
 there is:
 
 ```yaml
@@ -318,8 +318,8 @@ projects:
   - name: gradagent
     path: ~/projects/gradagent
     tasks: [code_review, deps_audit, docs_drift]
-  - name: nightshift
-    path: ~/projects/nightshift
+  - name: nightaudit
+    path: ~/projects/nightaudit
     tasks: [code_review]
     # Optional. Pin this project to one provider. Without it, whichever enabled
     # provider is idle and under budget takes the project.
@@ -336,19 +336,19 @@ schedule:
   idle_minutes: 60
 
 digest:
-  dir: ~/nightshift-reports
+  dir: ~/nightaudit-reports
 run:
   timeout_s: 600
 ```
 
-Run `nightshift status` after editing — it validates the file and tells you
+Run `nightaudit status` after editing — it validates the file and tells you
 exactly what's wrong if anything is.
 
-Set `NIGHTSHIFT_HOME` to move the whole state directory somewhere else.
+Set `NIGHTAUDIT_HOME` to move the whole state directory somewhere else.
 
 ## Tasks
 
-A task is just a prompt template. Five ship with nightshift:
+A task is just a prompt template. Five ship with nightaudit:
 
 | task | what it looks for |
 | --- | --- |
@@ -361,7 +361,7 @@ A task is just a prompt template. Five ship with nightshift:
 Give each project the tasks that suit it — a Terraform repo probably wants
 `security_audit` and `deps_audit`, not `dead_links`.
 
-**Write your own:** drop any `.md` file into `~/.nightshift/prompts/` and its
+**Write your own:** drop any `.md` file into `~/.nightaudit/prompts/` and its
 filename becomes a valid task name. Use a shipped name to override that
 template.
 
@@ -373,34 +373,34 @@ kept and filed as `LOW` rather than dropped.
 
 | command | what it does |
 | --- | --- |
-| `nightshift init` | Detect CLIs, register projects, write config, offer to install cron |
-| `nightshift run [--now]` | One gated run. `--now` skips window+idle checks |
-| `nightshift watch [-n N]` | Follow runs live, including ones cron started |
-| `nightshift digest [--date]` | Render `DIGEST-YYYY-MM-DD.md` |
-| `nightshift status` | Budget bars, recent runs, next window, provider health |
+| `nightaudit init` | Detect CLIs, register projects, write config, offer to install cron |
+| `nightaudit run [--now]` | One gated run. `--now` skips window+idle checks |
+| `nightaudit watch [-n N]` | Follow runs live, including ones cron started |
+| `nightaudit digest [--date]` | Render `DIGEST-YYYY-MM-DD.md` |
+| `nightaudit status` | Budget bars, recent runs, next window, provider health |
 
 Each takes `--help`.
 
 ## Troubleshooting
 
 **`nothing to do — outside configured windows (00:00-06:00)`**
-Working as designed — it's not in a window. Use `nightshift run --now` to run
+Working as designed — it's not in a window. Use `nightaudit run --now` to run
 anyway, or widen `schedule.windows`.
 
 **`nothing to do — claude_code used 12m ago (needs 60m idle)`**
-You've been using Claude Code, so nightshift is staying out of your way. Use
+You've been using Claude Code, so nightaudit is staying out of your way. Use
 `--now`, or lower `idle_minutes` (`0` disables the check).
 
 **`nothing to do — claude_code: daily budget spent (6/6 today)`**
 Out of quota for today. Raise `max_runs_per_day` if you want more.
 
-**``No usable AI CLI found. Install Claude Code or Codex and re-run `nightshift init`.``**
+**``No usable AI CLI found. Install Claude Code or Codex and re-run `nightaudit init`.``**
 Neither CLI is on your `PATH`. Check `claude --version` / `codex --version` in
 the same shell.
 
 **Cron never runs it.** Cron uses a minimal `PATH`, which is why `init` writes
 the absolute path to the binary into your crontab. Check
-`/tmp/nightshift-cron.log` — everything cron runs is logged there. On macOS,
+`/tmp/nightaudit-cron.log` — everything cron runs is logged there. On macOS,
 cron may also need Full Disk Access to read your projects.
 
 **A run is stuck.** Runs are killed at `run.timeout_s` (default 600s) and
@@ -408,24 +408,24 @@ recorded as `timeout`. There is nothing to clean up by hand.
 
 ## Uninstall
 
-nightshift keeps no state anywhere else, so removing it is three lines:
+nightaudit keeps no state anywhere else, so removing it is three lines:
 
 ```bash
 crontab -e                    # delete the block (see below)
-rm -rf ~/.nightshift          # config, ledger, queue, event logs
-pipx uninstall nightshift-cli
+rm -rf ~/.nightaudit          # config, ledger, queue, event logs
+pipx uninstall nightaudit
 ```
 
 `init` fences its crontab lines between two markers — delete them and
 everything between:
 
 ```
-# nightshift (managed — edit via `nightshift init`)
+# nightaudit (managed — edit via `nightaudit init`)
 ...
-# end nightshift
+# end nightaudit
 ```
 
-Your digests in `~/nightshift-reports` are yours — delete them or don't.
+Your digests in `~/nightaudit-reports` are yours — delete them or don't.
 
 ## Providers
 
@@ -444,7 +444,7 @@ by asking the model nicely. An adapter that can't do that won't be merged,
 because "0 files touched" is the whole product.
 
 **Copilot: help wanted, but blocked upstream.** It ships as a documented stub
-(`nightshift/adapters/copilot.py`). The obstacle isn't effort — it's that
+(`nightaudit/adapters/copilot.py`). The obstacle isn't effort — it's that
 Copilot CLI has no enforcement primitive that clears the bar. Its file-level
 denials don't apply across tools, so `shell(cat x)` walks around a denied
 `read(x)`, and [an open issue](https://github.com/github/copilot-cli/issues/2722)

@@ -3,12 +3,12 @@
 Open work, most consequential first. Anything already done lives in the git
 history, not here.
 
-## 1. Decide the `nightshift run` output format — blocks landing-page honesty
+## 1. Decide the `nightaudit run` output format — blocks landing-page honesty
 
 The identity board's hero terminal shows a ticking log:
 
 ```
-[09:14:02] nightshift · idle detected · running within budget
+[09:14:02] nightaudit · idle detected · running within budget
 [09:14:03] → gradagent · security_audit · claude_code
 [09:14:47] 🔴 HIGH  api/auth.py:142 — JWT tokens never expire; set exp claim
 ```
@@ -38,15 +38,15 @@ Two honest ways out:
 Leaning toward changing the CLI. Needs a decision either way; leaving both as
 they are means shipping a page that misrepresents the tool.
 
-## 2. Claim `nightshift-cli` on PyPI before announcing
+## 2. Claim `nightaudit` on PyPI before announcing
 
-The distribution is named `nightshift-cli` because PyPI's `nightshift` is Ian
+The distribution is named `nightaudit` because PyPI's `nightaudit` is Ian
 Fucci's NMR spectroscopy plotting tool (v1.0.1, live):
-<https://pypi.org/project/nightshift/>. The console script is still
-`nightshift` — the project name and the installed command are independent, so
-`pipx install nightshift-cli` gives you `nightshift run`.
+<https://pypi.org/project/nightaudit/>. The console script is still
+`nightaudit` — the project name and the installed command are independent, so
+`pipx install nightaudit` gives you `nightaudit run`.
 
-`nightshift-cli` was unclaimed when the rename landed, **but names are
+`nightaudit` was unclaimed when the rename landed, **but names are
 first-come and nothing reserves it.** Until it's registered, the README's
 quickstart is a promise about a package that doesn't exist yet.
 
@@ -55,7 +55,7 @@ python -m build
 python -m twine upload dist/*      # claims the name
 ```
 
-Until then, `pipx install nightshift-cli` fails with "no matching
+Until then, `pipx install nightaudit` fails with "no matching
 distribution", which is at least honest — it fails rather than installing the
 wrong software, which is what the old name did.
 
@@ -70,7 +70,7 @@ Blocked on (1): no point recording output whose format is about to change.
 
 ## 4. Copilot adapter — help wanted, blocked upstream
 
-**Codex shipped** (`nightshift/adapters/codex.py`), enforcing read-only with the
+**Codex shipped** (`nightaudit/adapters/codex.py`), enforcing read-only with the
 CLI's own OS sandbox. Its chip on the landing page is now `ready`.
 
 Copilot remains a documented stub raising `NotImplementedError`. The blocker is
@@ -93,7 +93,7 @@ documented, not observed. Worth one real run before trusting the digest.
 
 ## 5. The site has nowhere to go
 
-`site/app/layout.tsx` sets `metadataBase` to `https://nightshift.dev`, which is
+`site/app/layout.tsx` sets `metadataBase` to `https://nightaudit.dev`, which is
 not registered or deployed. Until it is, the og:image URL in the page metadata
 points at a domain that does not resolve. Either register it, point
 `metadataBase` at wherever this actually deploys, or expect broken previews.

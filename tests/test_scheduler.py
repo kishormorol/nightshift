@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from nightshift import events, report, scheduler
-from nightshift.budget import Ledger
-from nightshift.lock import Lock
-from nightshift.queue import Queue
+from nightaudit import events, report, scheduler
+from nightaudit.budget import Ledger
+from nightaudit.lock import Lock
+from nightaudit.queue import Queue
 from tests.conftest import FakeAdapter, build_config
 
 AT_NIGHT = datetime(2026, 7, 14, 3, 0)

@@ -1,4 +1,4 @@
-"""The adapter contract: what nightshift needs from any AI coding CLI."""
+"""The adapter contract: what nightaudit needs from any AI coding CLI."""
 
 from __future__ import annotations
 
@@ -112,7 +112,7 @@ class Adapter(Protocol):
         ...
 
     def availability(self) -> Availability:
-        """Like :meth:`available`, but explains itself for ``nightshift status``."""
+        """Like :meth:`available`, but explains itself for ``nightaudit status``."""
         ...
 
     def last_human_use(self) -> datetime | None:
@@ -144,7 +144,7 @@ class StubAdapter:
     """Base for adapters that are documented but not yet implemented."""
 
     name: str = "stub"
-    help_wanted_url: str = "https://github.com/kishormorol/nightshift/issues"
+    help_wanted_url: str = "https://github.com/kishormorol/nightaudit/issues"
 
     def available(self) -> bool:
         return False

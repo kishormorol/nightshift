@@ -1,6 +1,6 @@
 """Running the user's own commands against a project.
 
-This is the one part of nightshift that executes rather than reads. Everything
+This is the one part of nightaudit that executes rather than reads. Everything
 else here hands a prompt to an AI CLI that is held read-only by its own sandbox;
 a check is a command the user wrote, and it runs with the user's permissions and
 may do whatever they told it to. ``pytest`` writes ``.pytest_cache/``. That is
@@ -30,9 +30,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from nightshift.config import Check, Project
+from nightaudit.config import Check, Project
 
-log = logging.getLogger("nightshift")
+log = logging.getLogger("nightaudit")
 
 #: Colour codes and cursor moves. Plenty of tools colour their output even with
 #: stdout on a pipe — pytest and ruff among them — and the digest is markdown in

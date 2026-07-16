@@ -1,6 +1,6 @@
 """Crontab entries for the two scheduled commands.
 
-nightshift has no daemon: cron calls ``run`` hourly and the command decides for
+nightaudit has no daemon: cron calls ``run`` hourly and the command decides for
 itself whether to act.
 """
 
@@ -11,27 +11,27 @@ import subprocess
 import sys
 from pathlib import Path
 
-MARKER = "# nightshift (managed — edit via `nightshift init`)"
-END_MARKER = "# end nightshift"
+MARKER = "# nightaudit (managed — edit via `nightaudit init`)"
+END_MARKER = "# end nightaudit"
 
 HOURLY_RUN = "0 * * * *"
 DAILY_DIGEST = "30 7 * * *"
 
 
 def executable() -> str:
-    """Absolute path to the installed ``nightshift`` entry point."""
-    found = shutil.which("nightshift")
+    """Absolute path to the installed ``nightaudit`` entry point."""
+    found = shutil.which("nightaudit")
     if found:
         return found
     # Running from a source checkout or a venv that isn't on cron's PATH.
-    return f"{Path(sys.executable)} -m nightshift"
+    return f"{Path(sys.executable)} -m nightaudit"
 
 
 def entries(binary: str | None = None) -> list[str]:
     exe = binary or executable()
     return [
-        f"{HOURLY_RUN} {exe} run >> /tmp/nightshift-cron.log 2>&1",
-        f"{DAILY_DIGEST} {exe} digest >> /tmp/nightshift-cron.log 2>&1",
+        f"{HOURLY_RUN} {exe} run >> /tmp/nightaudit-cron.log 2>&1",
+        f"{DAILY_DIGEST} {exe} digest >> /tmp/nightaudit-cron.log 2>&1",
     ]
 
 
@@ -54,7 +54,7 @@ def read_crontab() -> str:
 
 
 def strip_block(existing: str) -> str:
-    """Remove a previously installed nightshift block."""
+    """Remove a previously installed nightaudit block."""
     out: list[str] = []
     skipping = False
     for line in existing.splitlines():

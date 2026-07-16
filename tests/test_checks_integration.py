@@ -12,11 +12,11 @@ from datetime import date, datetime
 
 import pytest
 
-from nightshift import report, scheduler
-from nightshift.budget import Ledger
-from nightshift.checks import CheckResult
-from nightshift.config import parse
-from nightshift.queue import Queue
+from nightaudit import report, scheduler
+from nightaudit.budget import Ledger
+from nightaudit.checks import CheckResult
+from nightaudit.config import parse
+from nightaudit.queue import Queue
 
 AT = datetime(2026, 7, 14, 3, 0)
 ON = date(2026, 7, 14)
@@ -124,7 +124,7 @@ def test_the_lock_allows_for_the_time_the_checks_will_take(tmp_path, get_fake, r
         captured.update(kw)
         return real_lock(**kw)
 
-    import nightshift.scheduler as sched
+    import nightaudit.scheduler as sched
 
     original, sched.Lock = sched.Lock, spy
     try:
@@ -178,7 +178,7 @@ def test_a_failed_checks_output_is_shown_and_a_passing_ones_is_not(tmp_path, cfg
 def test_a_red_check_stops_the_digest_calling_the_day_clean(tmp_path, cfg, fake_adapter):
     # "every run came back clean" is a claim about the AI's reading of the code.
     # It must not be printed over the top of a check that came back red.
-    from nightshift.adapters.base import RunResult
+    from nightaudit.adapters.base import RunResult
 
     clean_run = RunResult(
         provider="claude_code",

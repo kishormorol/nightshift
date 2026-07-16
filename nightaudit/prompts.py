@@ -1,7 +1,7 @@
 """Prompt template resolution.
 
-Two sources, in order: the user's own ``~/.nightshift/prompts/`` and the
-templates packaged with nightshift. Any ``.md`` file in either directory is a
+Two sources, in order: the user's own ``~/.nightaudit/prompts/`` and the
+templates packaged with nightaudit. Any ``.md`` file in either directory is a
 valid task name, so a user can add a task by dropping in a file — and can
 override a shipped template by using the same filename.
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from nightshift.config import state_dir
+from nightaudit.config import state_dir
 
 PACKAGED_PROMPTS = Path(__file__).parent / "prompts"
 

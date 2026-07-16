@@ -49,7 +49,7 @@ jobs:
           python -m build
       - name: The packaged wheel must carry the prompt templates
         run: |
-          python -m zipfile -l dist/*.whl | grep -q 'nightshift/prompts/code_review.md'
+          python -m zipfile -l dist/*.whl | grep -q 'nightaudit/prompts/code_review.md'
       - name: The wheel must not carry the landing page
         # site/ is a sibling of the package, not part of it. If it ever lands in
         # the wheel, pyproject's packages list has drifted.
@@ -65,19 +65,19 @@ jobs:
         # tag. This one runs on the PR that would break the allowlist, which is
         # where the mistake is still cheap.
         run: |
-          tar -tzf dist/*.tar.gz | grep -q 'nightshift/prompts/code_review.md'
+          tar -tzf dist/*.tar.gz | grep -q 'nightaudit/prompts/code_review.md'
           tar -tzf dist/*.tar.gz | grep -q 'tests/'
 
       - name: The version must not drift
         # pyproject's version is what PyPI publishes; __init__'s is what
-        # `nightshift --version` prints. They are two hand-kept literals, so a
+        # `nightaudit --version` prints. They are two hand-kept literals, so a
         # bump can touch one and miss the other — and the release workflow
         # compares the tag against pyproject alone. Drift would publish a
         # package whose own --version contradicts the tag it shipped under,
         # to a place PyPI does not allow taking it back from.
         run: |
           pyproject="$(python -c 'import tomllib,pathlib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
-          package="$(python -c 'import nightshift; print(nightshift.__version__)')"
+          package="$(python -c 'import nightaudit; print(nightaudit.__version__)')"
           test "$pyproject" = "$package" || {
             echo "pyproject says $pyproject, the package reports $package"
             exit 1

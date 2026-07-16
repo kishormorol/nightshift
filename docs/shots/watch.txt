@@ -1,37 +1,37 @@
-[2mnightshift · watching for runs — ctrl-c to stop[0m
+[2mnightaudit · watching for runs — ctrl-c to stop[0m
 
-[34m┌ [0m[1mnightshift · code_review[0m[2m   claude_code · 15:23:27[0m
-[32m  ⏺ [0m[2m~/projects/nightshift[0m
+[34m┌ [0m[1mnightaudit · code_review[0m[2m   claude_code · 15:23:27[0m
+[32m  ⏺ [0m[2m~/projects/nightaudit[0m
 [2m    I'll start by exploring the repository structure to understand what I'm reviewing.[0m
 [36m  ⏺ [0m[1mGlob[0m[2m(pattern: **/*)[0m
 [2m    ⎿  .git/info/exclude (+100 lines)[0m
 [35m[2m  ✻ thinking[0m
-[2m    The repo is a Python CLI called `nightshift`. Let me read the source files, skipping[0m
+[2m    The repo is a Python CLI called `nightaudit`. Let me read the source files, skipping[0m
 [2m    the vendored `.venv`.[0m
-[36m  ⏺ [0m[1mGlob[0m[2m(pattern: nightshift/**/*.py)[0m
-[2m    ⎿  nightshift/__init__.py (+17 lines)[0m
+[36m  ⏺ [0m[1mGlob[0m[2m(pattern: nightaudit/**/*.py)[0m
+[2m    ⎿  nightaudit/__init__.py (+17 lines)[0m
 [36m  ⏺ [0m[1mGlob[0m[2m(pattern: *.md)[0m
-[2m    ⎿  nightshift/prompts/code_review.md (+100 lines)[0m
+[2m    ⎿  nightaudit/prompts/code_review.md (+100 lines)[0m
 [35m[2m  ✻ thinking[0m
 [2m    The Python package is small — 18 files. Let me read the core modules, focusing on[0m
 [2m    the areas the recent commits touched (streaming, watch, pid handling).[0m
-[36m  ⏺ [0m[1mRead[0m[2m(file_path: ~/projects/nightshift/nightshift/cli.py)[0m
-[2m    ⎿  1 """The ``nightshift`` command line. (+532 lines)[0m
-[36m  ⏺ [0m[1mRead[0m[2m(file_path: ~/projects/nightshift/nightshift/scheduler.py)[0m
+[36m  ⏺ [0m[1mRead[0m[2m(file_path: ~/projects/nightaudit/nightaudit/cli.py)[0m
+[2m    ⎿  1 """The ``nightaudit`` command line. (+532 lines)[0m
+[36m  ⏺ [0m[1mRead[0m[2m(file_path: ~/projects/nightaudit/nightaudit/scheduler.py)[0m
 [2m    ⎿  1 """The gate: decide whether to run, pick the work, run it, record i… (+356 lines)[0m
 [35m[2m  ✻ thinking[0m
 [2m    Now the modules the recent commits touched — the event log, lock, and adapters.[0m
 {{elide 31}}
 [35m[2m  ✻ thinking[0m
-[2m    I've read all 18 modules of the `nightshift` package. Here are the findings, most[0m
+[2m    I've read all 18 modules of the `nightaudit` package. Here are the findings, most[0m
 [2m    severe first.[0m
-  🔴 HIGH [31mnightshift/adapters/claude_code.py · 267 — Replace the buffered `subprocess.…[0m
-  🔴 HIGH [31mnightshift/adapters/claude_code.py · 366 — Cancel the timer *after* reaping,…[0m
-  🟠 MED  [33mnightshift/lock.py · 121 — Have `release()` re-read the lockfile and unlink …[0m
-  🟠 MED  [33mnightshift/cli.py · 404 — Skip logs that are already `events.is_stale()` ins…[0m
-  🟡 LOW  [36mnightshift/events.py · 38 — Derive `STALE_AFTER_S` from `cfg.timeout_s` rath…[0m
-  🟡 LOW  [36mnightshift/scheduler.py · 335 — Bill the ledger with `_now()` instead of the…[0m
-  🟡 LOW  [36mnightshift/cron.py · 27 — Shell-quote the interpreter path (`shlex.quote`) i…[0m
+  🔴 HIGH [31mnightaudit/adapters/claude_code.py · 267 — Replace the buffered `subprocess.…[0m
+  🔴 HIGH [31mnightaudit/adapters/claude_code.py · 366 — Cancel the timer *after* reaping,…[0m
+  🟠 MED  [33mnightaudit/lock.py · 121 — Have `release()` re-read the lockfile and unlink …[0m
+  🟠 MED  [33mnightaudit/cli.py · 404 — Skip logs that are already `events.is_stale()` ins…[0m
+  🟡 LOW  [36mnightaudit/events.py · 38 — Derive `STALE_AFTER_S` from `cfg.timeout_s` rath…[0m
+  🟡 LOW  [36mnightaudit/scheduler.py · 335 — Bill the ledger with `_now()` instead of the…[0m
+  🟡 LOW  [36mnightaudit/cron.py · 27 — Shell-quote the interpreter path (`shlex.quote`) i…[0m
 [2m    One note on scope: the two HIGH findings are the same class of bug — the timeout is[0m
 [2m    not actually guaranteed to terminate the child tree — showing up on both the[0m
 [2m    …[0m

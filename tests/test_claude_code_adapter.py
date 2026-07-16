@@ -12,8 +12,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from nightshift import sessions
-from nightshift.adapters.claude_code import (
+from nightaudit import sessions
+from nightaudit.adapters.claude_code import (
     ALLOWED_TOOLS,
     DISALLOWED_TOOLS,
     ClaudeCodeAdapter,
@@ -257,7 +257,7 @@ def test_unavailable_when_version_hangs(adapter, spy, monkeypatch):
 
 def test_last_human_use_is_none_when_claude_never_ran(adapter, tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "nightshift.adapters.claude_code.CLAUDE_PROJECTS_DIR", tmp_path / "absent"
+        "nightaudit.adapters.claude_code.CLAUDE_PROJECTS_DIR", tmp_path / "absent"
     )
     # No directory means a fresh install, which reads as idle — not as busy.
     assert adapter.last_human_use() is None
@@ -266,7 +266,7 @@ def test_last_human_use_is_none_when_claude_never_ran(adapter, tmp_path, monkeyp
 def test_last_human_use_is_none_for_an_empty_dir(adapter, tmp_path, monkeypatch):
     empty = tmp_path / "projects"
     empty.mkdir()
-    monkeypatch.setattr("nightshift.adapters.claude_code.CLAUDE_PROJECTS_DIR", empty)
+    monkeypatch.setattr("nightaudit.adapters.claude_code.CLAUDE_PROJECTS_DIR", empty)
     assert adapter.last_human_use() is None
 
 
@@ -292,7 +292,7 @@ def test_last_human_use_finds_the_newest_mtime(adapter, tmp_path, monkeypatch):
     _age(root / "proj-a", now - timedelta(hours=5))
     _age(new, recent)
 
-    monkeypatch.setattr("nightshift.adapters.claude_code.CLAUDE_PROJECTS_DIR", root)
+    monkeypatch.setattr("nightaudit.adapters.claude_code.CLAUDE_PROJECTS_DIR", root)
     found = adapter.last_human_use()
     assert found is not None
     assert abs(found.timestamp() - recent.timestamp()) < 2
@@ -300,7 +300,7 @@ def test_last_human_use_finds_the_newest_mtime(adapter, tmp_path, monkeypatch):
 
 def test_a_directory_alone_is_not_evidence_of_a_human(adapter, tmp_path, monkeypatch):
     # This used to assert the opposite: a directory's mtime counted, erring
-    # toward "busy". That inverted once we learned nightshift's own runs write
+    # toward "busy". That inverted once we learned nightaudit's own runs write
     # transcripts into these same directories — our write bumps the parent, so
     # a directory mtime cannot be attributed to a human, and counting it would
     # make every run gate the next one no matter which sessions we skip.
@@ -308,7 +308,7 @@ def test_a_directory_alone_is_not_evidence_of_a_human(adapter, tmp_path, monkeyp
     (root / "proj-a").mkdir(parents=True)
     _age(root / "proj-a", datetime.now() - timedelta(minutes=2))
 
-    monkeypatch.setattr("nightshift.adapters.claude_code.CLAUDE_PROJECTS_DIR", root)
+    monkeypatch.setattr("nightaudit.adapters.claude_code.CLAUDE_PROJECTS_DIR", root)
     assert adapter.last_human_use() is None
 
 
@@ -326,13 +326,13 @@ def _session(root, name, when):
 def test_our_own_session_is_not_mistaken_for_a_human(adapter, tmp_path, monkeypatch):
     # The bug this guards: `claude --print` writes its transcript into the same
     # directory a human's session does, so every run left a fresh mtime that the
-    # next cron tick read as "someone is typing" — nightshift gated itself out
+    # next cron tick read as "someone is typing" — nightaudit gated itself out
     # for idle_minutes after every single run.
     root = tmp_path / "projects"
     _session(root, "ours-1234", datetime.now() - timedelta(minutes=1))
     sessions.record("ours-1234")
 
-    monkeypatch.setattr("nightshift.adapters.claude_code.CLAUDE_PROJECTS_DIR", root)
+    monkeypatch.setattr("nightaudit.adapters.claude_code.CLAUDE_PROJECTS_DIR", root)
     assert adapter.last_human_use() is None
 
 
@@ -341,7 +341,7 @@ def test_a_human_session_is_still_seen(adapter, tmp_path, monkeypatch):
     recent = datetime.now() - timedelta(minutes=4)
     _session(root, "a-human-session", recent)
 
-    monkeypatch.setattr("nightshift.adapters.claude_code.CLAUDE_PROJECTS_DIR", root)
+    monkeypatch.setattr("nightaudit.adapters.claude_code.CLAUDE_PROJECTS_DIR", root)
     found = adapter.last_human_use()
     assert found is not None
     assert abs(found.timestamp() - recent.timestamp()) < 2
@@ -349,14 +349,14 @@ def test_a_human_session_is_still_seen(adapter, tmp_path, monkeypatch):
 
 def test_a_human_in_the_same_project_still_blocks_us(adapter, tmp_path, monkeypatch):
     # Filtering by project path would have hidden exactly this person — someone
-    # working in a repo nightshift also reviews, which is when it must back off.
+    # working in a repo nightaudit also reviews, which is when it must back off.
     root = tmp_path / "projects"
     theirs = datetime.now() - timedelta(minutes=2)
     _session(root, "ours-1234", datetime.now() - timedelta(minutes=1))  # newer!
     _session(root, "theirs-9999", theirs)
     sessions.record("ours-1234")
 
-    monkeypatch.setattr("nightshift.adapters.claude_code.CLAUDE_PROJECTS_DIR", root)
+    monkeypatch.setattr("nightaudit.adapters.claude_code.CLAUDE_PROJECTS_DIR", root)
     found = adapter.last_human_use()
     assert found is not None
     assert abs(found.timestamp() - theirs.timestamp()) < 2

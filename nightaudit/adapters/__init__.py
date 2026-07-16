@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import inspect
 
-from nightshift.adapters.base import Adapter, AdapterError, RunResult, Status
-from nightshift.adapters.claude_code import ClaudeCodeAdapter
-from nightshift.adapters.codex import CodexAdapter
-from nightshift.adapters.copilot import CopilotAdapter
+from nightaudit.adapters.base import Adapter, AdapterError, RunResult, Status
+from nightaudit.adapters.claude_code import ClaudeCodeAdapter
+from nightaudit.adapters.codex import CodexAdapter
+from nightaudit.adapters.copilot import CopilotAdapter
 
 _REGISTRY: dict[str, type] = {
     "claude_code": ClaudeCodeAdapter,

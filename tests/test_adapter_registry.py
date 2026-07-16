@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from nightshift import adapters
-from nightshift.adapters import AdapterError
+from nightaudit import adapters
+from nightaudit.adapters import AdapterError
 
 
 def test_unknown_provider_names_the_known_ones():

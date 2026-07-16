@@ -13,7 +13,7 @@ export function Hero() {
     <section id="top" className="starfield relative px-6 pt-14 pb-12 sm:px-10">
       <div className="relative mx-auto max-w-3xl text-center">
         <h1 className="mb-6 text-3xl leading-[1.15] font-semibold tracking-[-0.01em] text-balance text-fg sm:text-[30px]">
-          Your AI works the night shift.
+          An audit doesn&apos;t change the books.
         </h1>
 
         <HeroTerminal />

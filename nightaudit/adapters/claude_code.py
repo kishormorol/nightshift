@@ -18,20 +18,20 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
-from nightshift import sessions
-from nightshift.adapters._process import (
+from nightaudit import sessions
+from nightaudit.adapters._process import (
     emit as _emit,
 )
-from nightshift.adapters._process import (
+from nightaudit.adapters._process import (
     format_input as _format_input,
 )
-from nightshift.adapters._process import (
+from nightaudit.adapters._process import (
     stream_ndjson,
 )
-from nightshift.adapters._process import (
+from nightaudit.adapters._process import (
     summarize as _summarize,
 )
-from nightshift.adapters.base import Availability, Event, OnEvent, RunResult
+from nightaudit.adapters.base import Availability, Event, OnEvent, RunResult
 
 #: Tools Claude Code may use: inspect the repo, nothing else.
 ALLOWED_TOOLS = ("Read", "Grep", "Glob", "NotebookRead")
@@ -122,11 +122,11 @@ class ClaudeCodeAdapter:
 
         Our own runs write transcripts here too, named for the session id the
         CLI reported, so those are skipped: counting them would make every run
-        gate the next one and nightshift would never run twice in a night.
+        gate the next one and nightaudit would never run twice in a night.
 
         Only files are considered. A directory's mtime bumps whenever anything
         inside it is written — including our own transcript — so it cannot be
-        attributed to a human once nightshift shares the directory, and
+        attributed to a human once nightaudit shares the directory, and
         counting it would defeat the check above.
         """
         root = self._projects_dir()

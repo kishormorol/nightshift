@@ -3,7 +3,7 @@
 
 Run: python3 docs/make-shots.py
 
-Each `docs/shots/<name>.txt` is a transcript captured from a real `nightshift`
+Each `docs/shots/<name>.txt` is a transcript captured from a real `nightaudit`
 invocation, ANSI escapes and all. This renders each one to `docs/img/<name>.svg`
 — a terminal window you can drop straight into Markdown.
 
@@ -194,9 +194,9 @@ def render(name: str, transcript: str, title: str) -> str:
 
 #: shot name -> the title bar caption.
 SHOTS = {
-    "init": "nightshift init — one-time setup",
-    "watch": "nightshift watch — a review in flight",
-    "status": "nightshift status — budget and schedule",
+    "init": "nightaudit init — one-time setup",
+    "watch": "nightaudit watch — a review in flight",
+    "status": "nightaudit status — budget and schedule",
 }
 
 

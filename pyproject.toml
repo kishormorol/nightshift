@@ -3,12 +3,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-# The distribution name, not the command. PyPI's `nightshift` is Ian Fucci's
-# NMR plotting tool, so the package installs as `nightshift-cli` while the
-# console script below stays `nightshift` — the two are independent.
-name = "nightshift-cli"
+# Distribution and command are the same word. The old name needed a `-cli`
+# suffix because PyPI's `nightshift` belongs to Ian Fucci's NMR plotting tool;
+# `nightaudit` is unclaimed, so that split is gone.
+name = "nightaudit"
 version = "0.3.0"
-description = "Your AI works the night shift — read-only reviews of your projects while you're busy, one digest every morning."
+description = "An audit doesn't change the books — read-only reviews of your projects while you're busy, one digest every morning."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -37,18 +37,18 @@ dependencies = [
 dev = ["pytest>=7.4", "pytest-cov>=4.1"]
 
 [project.scripts]
-nightshift = "nightshift.cli:main"
+nightaudit = "nightaudit.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/kishormorol/nightshift"
-Source = "https://github.com/kishormorol/nightshift"
-Issues = "https://github.com/kishormorol/nightshift/issues"
+Homepage = "https://github.com/kishormorol/nightaudit"
+Source = "https://github.com/kishormorol/nightaudit"
+Issues = "https://github.com/kishormorol/nightaudit/issues"
 
 [tool.hatch.build.targets.sdist]
 # Allowlist, not excludes: the marketing site's node_modules is only ignored by a
 # nested site/.gitignore, which hatchling's default selection does not honor.
 include = [
-  "/nightshift",
+  "/nightaudit",
   "/tests",
   "/docs",
   "/README.md",
@@ -58,7 +58,7 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["nightshift"]
+packages = ["nightaudit"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

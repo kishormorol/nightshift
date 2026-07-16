@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from nightshift.queue import Queue
+from nightaudit.queue import Queue
 
 PAIRS = [("a", "code_review"), ("a", "deps_audit"), ("b", "docs_drift")]
 

@@ -4,7 +4,7 @@ from datetime import datetime, time
 
 import pytest
 
-from nightshift.config import (
+from nightaudit.config import (
     DEFAULT_CHECK_TIMEOUT_S,
     ConfigError,
     Schedule,
@@ -36,7 +36,7 @@ def test_parses_the_spec_example(tmp_path):
                 "windows": ["09:00-18:00", "00:00-06:00"],
                 "idle_minutes": 60,
             },
-            "digest": {"dir": "~/nightshift-reports"},
+            "digest": {"dir": "~/nightaudit-reports"},
             "run": {"timeout_s": 600},
         }
     )
@@ -167,7 +167,7 @@ def test_zero_length_window_rejected_with_a_hint():
 
 
 def test_no_projects_is_an_error():
-    with pytest.raises(ConfigError, match="nightshift init"):
+    with pytest.raises(ConfigError, match="nightaudit init"):
         parse({"providers": {"claude_code": {"enabled": True}}})
 
 
@@ -402,7 +402,7 @@ def test_bad_task_name_is_rejected():
 
 
 def test_missing_file_points_at_init(tmp_path):
-    with pytest.raises(ConfigError, match="nightshift init"):
+    with pytest.raises(ConfigError, match="nightaudit init"):
         load(tmp_path / "nope.yaml")
 
 

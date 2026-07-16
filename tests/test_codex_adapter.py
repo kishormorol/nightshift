@@ -15,8 +15,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from nightshift import sessions
-from nightshift.adapters.codex import APPROVAL, SANDBOX, CodexAdapter
+from nightaudit import sessions
+from nightaudit.adapters.codex import APPROVAL, SANDBOX, CodexAdapter
 
 
 @pytest.fixture
@@ -438,7 +438,7 @@ def test_last_human_use_finds_the_newest_session(adapter, tmp_path, monkeypatch)
 
 
 def test_our_own_sessions_are_not_read_as_a_human(adapter, tmp_path, monkeypatch, isolated_home):
-    """Counting our own runs would make nightshift gate itself out after each."""
+    """Counting our own runs would make nightaudit gate itself out after each."""
     monkeypatch.setenv("CODEX_HOME", str(tmp_path))
     day = tmp_path / "sessions"
     day.mkdir(parents=True)

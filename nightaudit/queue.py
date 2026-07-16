@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from nightshift.config import state_dir
-from nightshift.store import read_json, write_json
+from nightaudit.config import state_dir
+from nightaudit.store import read_json, write_json
 
 Pair = tuple[str, str]
 

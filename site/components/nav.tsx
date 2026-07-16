@@ -16,7 +16,7 @@ export function Nav() {
           className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
         >
           <Wordmark size={30} />
-          <span className="sr-only">nightshift home</span>
+          <span className="sr-only">nightaudit home</span>
         </a>
         <div className="flex items-center gap-6 text-[13.5px] text-fg-dim">
           {LINKS.map((link) => (

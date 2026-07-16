@@ -2,7 +2,7 @@
  * The run the hero terminal replays.
  *
  * **The format here is verbatim.** Every glyph, every column, every header and
- * footer is what `nightshift watch` actually prints — checked against real
+ * footer is what `nightaudit watch` actually prints — checked against real
  * captured output, not remembered:
  *
  *   ┌ project · task   provider · HH:MM:SS   run began   (cli.py `_render_log_event`)
@@ -13,7 +13,7 @@
  *   └ ✓ ok   1m42s · 2 findings              the outcome
  *
  * **The projects and findings are illustrative.** Real captured output reviews
- * nightshift's own internals — true, but unreadable to someone meeting the tool
+ * nightaudit's own internals — true, but unreadable to someone meeting the tool
  * for the first time. So the shape is real and the subject is an example, which
  * is the honest trade for a hero: a visitor should recognise the output when
  * they run it, and picture their own repo in it.
@@ -47,7 +47,7 @@ export interface ScriptLine {
 export const RUN_SCRIPT: readonly ScriptLine[] = [
   {
     kind: "banner",
-    msg: "nightshift · watching for runs — ctrl-c to stop",
+    msg: "nightaudit · watching for runs — ctrl-c to stop",
     used: 0,
   },
 
@@ -131,12 +131,12 @@ export const LINE_COLOR: Record<LineKind, string> = {
   end: "var(--color-ok)",
 };
 
-export const INSTALL_COMMAND = "pipx install nightshift-cli";
+export const INSTALL_COMMAND = "pipx install nightaudit";
 
 export const QUICKSTART = [
-  "pipx install nightshift-cli",
-  "nightshift init",
-  "nightshift run --now",
+  "pipx install nightaudit",
+  "nightaudit init",
+  "nightaudit run --now",
 ].join("\n");
 
-export const GITHUB_URL = "https://github.com/kishormorol/nightshift";
+export const GITHUB_URL = "https://github.com/kishormorol/nightaudit";

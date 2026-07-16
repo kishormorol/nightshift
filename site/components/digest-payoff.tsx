@@ -34,7 +34,7 @@ export function DigestPayoff() {
                   aria-hidden="true"
                 />
                 <span className="font-mono text-sm text-fg">
-                  Nightshift · morning digest
+                  Nightaudit · morning digest
                 </span>
                 <span className="ml-auto font-mono text-[10px] text-fg-fainter">
                   Jul 14

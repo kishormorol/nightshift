@@ -8,7 +8,7 @@ import { GITHUB_URL } from "@/lib/run-script";
  * chips. They are not equals, and this list says so: a chip is only `ready` once
  * its adapter actually runs, per SPEC.md ("The page may only claim what the tool
  * does"). Codex shipped and is drawn as real; Copilot remains a documented stub
- * (nightshift/adapters/copilot.py) and stays marked as what it is.
+ * (nightaudit/adapters/copilot.py) and stays marked as what it is.
  */
 const ADAPTERS = [
   { name: "Claude Code", ready: true },

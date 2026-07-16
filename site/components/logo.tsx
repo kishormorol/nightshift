@@ -46,7 +46,7 @@ export function Wordmark({ size = 30 }: { size?: number }) {
         className="font-mono font-semibold tracking-[-0.02em] text-fg"
         style={{ fontSize: size * 0.53 }}
       >
-        nightshift
+        nightaudit
       </span>
     </span>
   );

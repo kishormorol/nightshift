@@ -1,6 +1,6 @@
 """Small JSON state files, written atomically.
 
-nightshift is invoked from cron and may be killed mid-write; every state file
+nightaudit is invoked from cron and may be killed mid-write; every state file
 goes through a temp file + ``os.replace`` so a torn write can never leave a
 half-parsed ledger behind.
 """
@@ -17,7 +17,7 @@ from typing import Any
 def read_json(path: Path, default: Any) -> Any:
     """Read ``path``, returning ``default`` if it is missing or unreadable.
 
-    A corrupt state file is not worth crashing a cron job over — nightshift
+    A corrupt state file is not worth crashing a cron job over — nightaudit
     starts from ``default`` and carries on.
     """
     try:

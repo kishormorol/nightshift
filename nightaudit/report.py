@@ -8,11 +8,11 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
-from nightshift.adapters.base import RunResult
-from nightshift.budget import Ledger
-from nightshift.checks import CheckResult
-from nightshift.config import Config
-from nightshift.store import read_json, write_json
+from nightaudit.adapters.base import RunResult
+from nightaudit.budget import Ledger
+from nightaudit.checks import CheckResult
+from nightaudit.config import Config
+from nightaudit.store import read_json, write_json
 
 NO_FINDINGS = "No findings."
 
@@ -384,7 +384,7 @@ def render_digest(
         | {c.project for c in checks}
     )
     out: list[str] = []
-    out.append("# Nightshift · morning digest")
+    out.append("# Nightaudit · morning digest")
     out.append("")
     out.append(
         f"{on.strftime('%a %b')} {on.day}, {on.year} · generated "

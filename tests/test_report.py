@@ -4,9 +4,9 @@ from datetime import date, datetime
 
 import pytest
 
-from nightshift.adapters.base import RunResult
-from nightshift.budget import Ledger
-from nightshift.report import (
+from nightaudit.adapters.base import RunResult
+from nightaudit.budget import Ledger
+from nightaudit.report import (
     PLACEHOLDER,
     budget_bar,
     dedupe,
@@ -230,7 +230,7 @@ def test_stored_result_round_trips(cfg):
 
 
 def test_two_runs_in_the_same_second_do_not_overwrite_each_other(cfg):
-    # Filenames are second-granular. `nightshift run --now` twice in a loop hits
+    # Filenames are second-granular. `nightaudit run --now` twice in a loop hits
     # this instantly, and a lost run contradicts the digest's own promise.
     store_result(cfg, result(findings_md="- HIGH a.py:1 — first"))
     store_result(cfg, result(findings_md="- HIGH b.py:2 — second"))
@@ -295,7 +295,7 @@ def render(cfg, results, ledger=None):
 
 def test_digest_has_every_required_section(cfg):
     text = render(cfg, [result(findings_md="- HIGH a.py:1 — boom")])
-    assert "# Nightshift · morning digest" in text
+    assert "# Nightaudit · morning digest" in text
     assert "## Budget remaining" in text
     assert "## Highlights" in text
     assert "## By project" in text
@@ -442,4 +442,4 @@ def test_write_digest_puts_the_file_where_the_spec_says(cfg):
     store_result(cfg, result())
     path = write_digest(cfg, ON, ledger=Ledger(cfg.digest_dir.parent / "l.json"))
     assert path == cfg.digest_dir / "DIGEST-2026-07-14.md"
-    assert path.read_text(encoding="utf-8").startswith("# Nightshift")
+    assert path.read_text(encoding="utf-8").startswith("# Nightaudit")

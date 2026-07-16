@@ -3,7 +3,7 @@
 cron starts each run in its own process, so a dashboard opened at 2am has no
 callback to subscribe to and no way back into a run that began an hour ago.
 Every run therefore publishes what it sees to a file as it goes, and
-``nightshift watch`` tails it.
+``nightaudit watch`` tails it.
 
 Nothing here is load-bearing. The digest is built from stored results, never
 from these logs; a run whose event log could not be written is still a correct
@@ -22,8 +22,8 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Iterator
 
-from nightshift.adapters.base import Event, RunResult
-from nightshift.config import state_dir
+from nightaudit.adapters.base import Event, RunResult
+from nightaudit.config import state_dir
 
 #: Event logs older than this are pruned on the next run.
 KEEP_DAYS = 14

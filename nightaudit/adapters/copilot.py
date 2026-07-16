@@ -2,7 +2,7 @@
 
 **Help wanted, but the obstacle is upstream, not effort.** The scheduler, ledger,
 queue, and digest are all provider-agnostic, so this is one class against the
-contract in ``nightshift.adapters.base`` — perhaps an afternoon. It is not
+contract in ``nightaudit.adapters.base`` — perhaps an afternoon. It is not
 written because Copilot CLI has no enforcement primitive that clears our bar.
 
 What was checked, as of 2026-07, so the next person need not repeat it:
@@ -18,7 +18,7 @@ What was checked, as of 2026-07, so the next person need not repeat it:
 - The docs do not say what happens when the model reaches for a tool that was
   never allowed in programmatic mode. That is the whole guarantee, undocumented.
 
-So the blocker is not "nobody wrote it". It is that nightshift cannot promise
+So the blocker is not "nobody wrote it". It is that nightaudit cannot promise
 "0 files touched" on top of that, and the promise is the product. Compare
 ``codex.py``, which is implemented precisely because Codex hands us an OS-level
 sandbox to stand on.
@@ -28,7 +28,7 @@ documented for non-interactive runs — then this becomes worth writing:
 
 1. ``availability()`` — is the GitHub Copilot CLI on PATH and authenticated?
 2. ``last_human_use()`` — newest mtime of whatever Copilot writes per session,
-   so nightshift stays out of the user's way. Return ``None`` if unknowable.
+   so nightaudit stays out of the user's way. Return ``None`` if unknowable.
 3. ``run()`` — invoke Copilot headlessly against ``project_dir`` **read-only**,
    and map its exit into ``ok`` / ``failed`` / ``timeout``.
 
@@ -36,14 +36,14 @@ documented for non-interactive runs — then this becomes worth writing:
 read-only with CLI permission flags, the second with a kernel sandbox. Either is
 acceptable. Asking the model nicely is not.
 
-https://github.com/kishormorol/nightshift/issues
+https://github.com/kishormorol/nightaudit/issues
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from nightshift.adapters.base import StubAdapter
+from nightaudit.adapters.base import StubAdapter
 
 
 @dataclass

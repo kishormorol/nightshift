@@ -1,14 +1,14 @@
-# nightshift — Implementation Spec (v1)
+# nightaudit — Implementation Spec (v1)
 
-> Your AI works the night shift. A Python CLI that puts your idle AI coding
+> An audit doesn't change the books. A Python CLI that puts your idle AI coding
 > subscription (Claude Code; Codex/Copilot later) to work while you're busy:
 > read-only reviews of your projects during configured hours, one markdown
 > digest every morning. It NEVER lets a provider modify any project file.
 
 > **On that "NEVER".** It used to read "It NEVER modifies any project file",
 > which stopped being true the moment projects could configure `checks:` —
-> commands of the user's own that nightshift executes. The guarantee that
-> matters is the one nightshift can actually enforce, and it enforces it against
+> commands of the user's own that nightaudit executes. The guarantee that
+> matters is the one nightaudit can actually enforce, and it enforces it against
 > the AI: a provider gets a read-only sandbox and cannot escape it. A check is
 > the user's command, run with the user's permissions, and `pytest` writes
 > `.pytest_cache/` because they asked it to. Narrowing the sentence is not a
@@ -42,18 +42,18 @@ documented stubs marked "help wanted").
 
 ## Tech
 
-- Python 3.10+, installable via pipx (`pyproject.toml`, console script `nightshift`)
+- Python 3.10+, installable via pipx (`pyproject.toml`, console script `nightaudit`)
 - Dependencies: keep minimal — `pyyaml`, `click` (or `typer`), stdlib elsewhere
-- No daemon. System cron invokes `nightshift run` hourly; the command decides
+- No daemon. System cron invokes `nightaudit run` hourly; the command decides
   internally whether to act and exits 0 quietly otherwise.
 
 ## Repo structure
 
 ```
-nightshift/
+nightaudit/
 ├── README.md
 ├── pyproject.toml
-├── nightshift/
+├── nightaudit/
 │   ├── __init__.py
 │   ├── cli.py           # init | run | digest | status
 │   ├── config.py        # load + validate YAML config
@@ -82,23 +82,23 @@ nightshift/
 └── tests/
 ```
 
-> **Amended:** prompt templates live in `nightshift/prompts/` rather than a
+> **Amended:** prompt templates live in `nightaudit/prompts/` rather than a
 > top-level `prompts/`. A top-level directory is not package data and would not
 > survive `pipx install`, which makes every task unresolvable for exactly the
 > users who installed the documented way. User templates still override the
-> shipped ones from `~/.nightshift/prompts/`, so the "drop in a `.md`, get a
+> shipped ones from `~/.nightaudit/prompts/`, so the "drop in a `.md`, get a
 > task" contract below is unchanged. CI asserts the wheel carries them.
 
 ## State & files
 
-All state lives under `~/.nightshift/`:
+All state lives under `~/.nightaudit/`:
 - `config.yaml` — user config (below)
 - `ledger.json` — budget counts per provider per day/week
 - `queue.json` — round-robin position
 - `lock` — lockfile during a run
-Reports go to the configured `digest.dir` (default `~/nightshift-reports/`).
+Reports go to the configured `digest.dir` (default `~/nightaudit-reports/`).
 
-## Config schema (`~/.nightshift/config.yaml`)
+## Config schema (`~/.nightaudit/config.yaml`)
 
 ```yaml
 providers:
@@ -118,7 +118,7 @@ schedule:
   idle_minutes: 60
 
 digest:
-  dir: ~/nightshift-reports
+  dir: ~/nightaudit-reports
 run:
   timeout_s: 600
 ```
@@ -157,7 +157,7 @@ class Adapter(Protocol):
   stdout as `findings_md` with status `ok` — never discard a completed run.
 - `available()`: binary on PATH + a cheap auth check.
 
-## Scheduler (`nightshift run`)
+## Scheduler (`nightaudit run`)
 
 Proceed only if ALL pass, otherwise exit 0 with a one-line log reason:
 1. **Window** — now is inside a configured window (handle windows crossing midnight).
@@ -184,7 +184,7 @@ log so the digest shows it.
 ## Reporting & digest
 
 Each run writes `reports/YYYY-MM-DD/<project>-<task>-<HHMMSS>.json` (full
-RunResult) and `.md` (findings). `nightshift digest` renders
+RunResult) and `.md` (findings). `nightaudit digest` renders
 `DIGEST-YYYY-MM-DD.md`:
 
 1. **Header** — date + budget bar per provider:
@@ -203,8 +203,8 @@ call to summarize in v1.
 
 ## Prompt templates
 
-Markdown files. Resolved from `~/.nightshift/prompts/` first, then the
-templates shipped in `nightshift/prompts/` — so any `.md` in either directory
+Markdown files. Resolved from `~/.nightaudit/prompts/` first, then the
+templates shipped in `nightaudit/prompts/` — so any `.md` in either directory
 is a valid task name, and a user file shadows a shipped one of the same name.
 Each template must instruct the model to: only read, never
 modify; output findings as a markdown list; prefix each finding with
@@ -213,12 +213,12 @@ recommendation per finding; say "No findings." if clean.
 
 ## CLI
 
-- `nightshift init` — interactive: detect installed provider CLIs, prompt for
+- `nightaudit init` — interactive: detect installed provider CLIs, prompt for
   project paths, write config, print (and offer to install) cron entries:
-  hourly `nightshift run`, daily 07:30 `nightshift digest`.
-- `nightshift run [--now]` — one gated run.
-- `nightshift digest [--date YYYY-MM-DD]` — render digest.
-- `nightshift status` — budget bars, last 5 runs, next eligible window,
+  hourly `nightaudit run`, daily 07:30 `nightaudit digest`.
+- `nightaudit run [--now]` — one gated run.
+- `nightaudit digest [--date YYYY-MM-DD]` — render digest.
+- `nightaudit status` — budget bars, last 5 runs, next eligible window,
   provider availability.
 
 ## Error handling
@@ -241,13 +241,13 @@ conditions.
 
 ## Landing page
 
-Lives in `site/` (Next.js App Router + Tailwind). Built from the Nightshift
+Lives in `site/` (Next.js App Router + Tailwind). Built from the Nightaudit
 identity board, turn 3: the "soft nocturnal" direction refined into `3a` (the
 page) and `3b` (the 1280×640 `og:image`). Every route prerenders static.
 
 It is deliberately a sibling of the Python package, not part of it: the wheel
 does not ship it and the CLI does not import it. `pyproject.toml` packages only
-`nightshift`.
+`nightaudit`.
 
 **The page may only claim what the tool does.** The board is a mockup and a
 mockup can promise anything; a published page is a claim. Concretely, and
@@ -268,9 +268,9 @@ non-negotiably:
 GIF/asciinema placeholder above the fold, then exactly:
 
 ```bash
-pipx install nightshift-cli
-nightshift init
-nightshift run --now
+pipx install nightaudit
+nightaudit init
+nightaudit run --now
 ```
 
 Then the "0 files touched" trust story (how read-only is enforced), digest

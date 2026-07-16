@@ -5,7 +5,7 @@ Two invariants hold across the whole suite:
 1. **No test spends quota.** Nothing here shells out to a real AI CLI; the
    scheduler is driven by :class:`FakeAdapter` and the Claude Code adapter is
    tested against a mocked ``subprocess``.
-2. **No test touches the real home directory.** ``NIGHTSHIFT_HOME`` is pointed
+2. **No test touches the real home directory.** ``NIGHTAUDIT_HOME`` is pointed
    at a tmp_path for every test, so a stray ``Ledger()`` can never read or
    write the developer's actual ledger.
 """
@@ -28,16 +28,16 @@ _REAL_SUBPROCESS = {
     name: getattr(subprocess, name) for name in ("run", "Popen", "check_output", "call")
 }
 
-from nightshift.adapters.base import Availability, RunResult
-from nightshift.config import Config, parse
+from nightaudit.adapters.base import Availability, RunResult
+from nightaudit.config import Config, parse
 
 
 @pytest.fixture(autouse=True)
 def isolated_home(tmp_path, monkeypatch):
-    """Point all nightshift state at a throwaway directory."""
+    """Point all nightaudit state at a throwaway directory."""
     home = tmp_path / "state"
     home.mkdir()
-    monkeypatch.setenv("NIGHTSHIFT_HOME", str(home))
+    monkeypatch.setenv("NIGHTAUDIT_HOME", str(home))
     return home
 
 

@@ -11,7 +11,7 @@ import {
 } from "@/lib/run-script";
 
 /**
- * The fake-live terminal. Replays a recorded `nightshift watch` on a loop.
+ * The fake-live terminal. Replays a recorded `nightaudit watch` on a loop.
  *
  * It renders the finished frame on the server and during the first paint, so
  * the hero is never an empty box: crawlers, RSS readers and anyone whose JS
@@ -47,7 +47,7 @@ export function HeroTerminal() {
           <span className="size-2.5 rounded-full bg-line-500" />
         </div>
         <span className="font-mono text-[11px] text-fg-fainter">
-          nightshift watch
+          nightaudit watch
         </span>
         <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] text-ok">
           <span className="size-[7px] animate-rec rounded-full bg-[#6fdd8b]" />
@@ -57,7 +57,7 @@ export function HeroTerminal() {
 
       <div className="px-4 pt-4 pb-3.5 font-mono text-[13px] sm:min-h-[268px]">
         <div className="mb-2 text-fg-fainter">
-          <span className="text-accent">$</span> nightshift watch
+          <span className="text-accent">$</span> nightaudit watch
         </div>
 
         {/* The run is a log, and a log read by a screen reader mid-replay is
@@ -92,7 +92,7 @@ export function HeroTerminal() {
       </div>
 
       <p className="sr-only">
-        A recorded nightshift watch session. At 02:14 it audits gradagent for
+        A recorded nightaudit watch session. At 02:14 it audits gradagent for
         security issues and reports a high-severity finding at api/auth.py line
         142, where JWT tokens never expire. At 03:09 it reviews payments-web and
         reports a medium-severity finding at worker/queue.py line 88, a retry

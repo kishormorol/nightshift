@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Design tokens lifted from the "soft nocturnal" direction (2b) of the
-   Nightshift identity board, as refined in turn 3: indigo glow + moon amber
+   Nightaudit identity board, as refined in turn 3: indigo glow + moon amber
    on navy. */
 @theme {
   --color-ink: #06090f;

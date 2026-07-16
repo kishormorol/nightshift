@@ -17,7 +17,7 @@ import { join } from "node:path";
  * display. Hence the inline styles and hardcoded hexes.
  */
 export const alt =
-  "nightshift — your AI works the night shift. Read-only reviews while you're busy, one digest every morning.";
+  "nightaudit — an audit doesn't change the books. Read-only reviews while you're busy, one digest every morning.";
 export const size = { width: 1280, height: 640 };
 export const contentType = "image/png";
 
@@ -153,7 +153,7 @@ export default async function OpengraphImage() {
                 fontFamily: "JetBrains Mono",
               }}
             >
-              nightshift
+              nightaudit
             </div>
           </div>
 
@@ -169,8 +169,8 @@ export default async function OpengraphImage() {
               flexDirection: "column",
             }}
           >
-            <span>Your AI works</span>
-            <span>the night shift.</span>
+            <span>An audit doesn&apos;t</span>
+            <span>change the books.</span>
           </div>
 
           <div
@@ -187,8 +187,8 @@ export default async function OpengraphImage() {
           </div>
 
           {/* Stacked, not side by side. Beside each other these two fit only
-              at one specific package-name length — renaming to `nightshift-cli`
-              silently clipped the button mid-word. A column survives any name.
+              at one specific package-name length — an earlier rename silently
+              clipped the button mid-word. A column survives any name.
               flexShrink:0 so the button is never squeezed into its own text. */}
           <div
             style={{
@@ -211,7 +211,7 @@ export default async function OpengraphImage() {
                 whiteSpace: "nowrap",
               }}
             >
-              pipx install nightshift-cli
+              pipx install nightaudit
             </div>
             <div
               style={{
@@ -221,7 +221,7 @@ export default async function OpengraphImage() {
                 whiteSpace: "nowrap",
               }}
             >
-              github.com/kishormorol/nightshift
+              github.com/kishormorol/nightaudit
             </div>
           </div>
         </div>
@@ -257,7 +257,7 @@ export default async function OpengraphImage() {
               ))}
             </div>
             <div style={{ fontSize: 15, color: "#5f6c80", fontFamily: "JetBrains Mono" }}>
-              nightshift run
+              nightaudit run
             </div>
           </div>
 
@@ -270,7 +270,7 @@ export default async function OpengraphImage() {
               fontFamily: "JetBrains Mono",
             }}
           >
-            <Line stamp="$" stampColor={ACCENT} color="#5f6c80" text="nightshift run" />
+            <Line stamp="$" stampColor={ACCENT} color="#5f6c80" text="nightaudit run" />
             <Line stamp="[09:14]" color="#8593b8" text="→ gradagent · security_audit" />
             <Line stamp="[09:14]" color="#ff8b84" text="HIGH auth.py:142" dot="#ff5b52" />
             <Line stamp="[09:16]" color="#8593b8" text="→ payments-web · deps_audit" />

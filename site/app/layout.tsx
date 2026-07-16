@@ -21,17 +21,17 @@ const description =
   "projects while you're busy, one digest every morning.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://nightshift.dev"),
-  title: "nightshift — your AI works the night shift",
+  metadataBase: new URL("https://nightaudit.dev"),
+  title: "nightaudit — an audit doesn't change the books",
   description,
   openGraph: {
-    title: "nightshift",
+    title: "nightaudit",
     description,
-    url: "https://nightshift.dev",
-    siteName: "nightshift",
+    url: "https://nightaudit.dev",
+    siteName: "nightaudit",
     type: "website",
   },
-  twitter: { card: "summary_large_image", title: "nightshift", description },
+  twitter: { card: "summary_large_image", title: "nightaudit", description },
 };
 
 export default function RootLayout({

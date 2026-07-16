@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from nightshift.adapters.base import Event, OnEvent
+from nightaudit.adapters.base import Event, OnEvent
 
 #: Slack given to a process that should already be dying, before we conclude the
 #: deadline timer failed and kill the tree ourselves.

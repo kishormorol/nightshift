@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from nightshift.config import Budget, state_dir
-from nightshift.store import read_json, write_json
+from nightaudit.config import Budget, state_dir
+from nightaudit.store import read_json, write_json
 
 #: Ledger entries older than this are dropped when the file is loaded.
 RETENTION_DAYS = 30

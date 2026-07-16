@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from nightshift import prompts
+from nightaudit import prompts
 
 
 def test_the_five_documented_tasks_ship():

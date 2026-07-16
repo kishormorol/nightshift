@@ -26,14 +26,14 @@ jobs:
         # be taken back, so disagree here instead.
         #
         # All three must say the same thing: the tag, what pyproject publishes,
-        # and what `nightshift --version` reports. CI holds the last two
+        # and what `nightaudit --version` reports. CI holds the last two
         # together on every PR, but a tag push does not run CI — so check here
         # too rather than trust that it did.
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           tag="${GITHUB_REF_NAME#v}"
           version="$(python -c 'import tomllib,pathlib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
-          package="$(python -c 'import nightshift; print(nightshift.__version__)')"
+          package="$(python -c 'import nightaudit; print(nightaudit.__version__)')"
           test "$tag" = "$version" || {
             echo "tag $GITHUB_REF_NAME != pyproject version $version"
             exit 1
@@ -68,8 +68,8 @@ jobs:
         # from source here, where it is cheap to notice.
         run: |
           python -m venv /tmp/sdist-check
-          /tmp/sdist-check/bin/pip install --no-binary nightshift-cli dist/*.tar.gz
-          /tmp/sdist-check/bin/nightshift --version
+          /tmp/sdist-check/bin/pip install --no-binary nightaudit dist/*.tar.gz
+          /tmp/sdist-check/bin/nightaudit --version
 
       - run: twine check dist/*
 

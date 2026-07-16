@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from nightshift.lock import Lock, LockBusy
+from nightaudit.lock import Lock, LockBusy
 
 
 def test_acquire_creates_and_release_removes(tmp_path):
@@ -138,7 +138,7 @@ def test_unreadable_lock_falls_back_to_mtime_and_can_go_stale(tmp_path):
 
     lock = Lock(path, timeout_s=600)
     assert lock.is_stale() is True
-    lock.acquire()  # a garbage lock must not wedge nightshift forever
+    lock.acquire()  # a garbage lock must not wedge nightaudit forever
     lock.release()
 
 

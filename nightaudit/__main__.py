@@ -1,4 +1,4 @@
-from nightshift.cli import main
+from nightaudit.cli import main
 
 if __name__ == "__main__":
     main()

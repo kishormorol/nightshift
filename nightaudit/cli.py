@@ -1,4 +1,4 @@
-"""The ``nightshift`` command line.
+"""The ``nightaudit`` command line.
 
 Design rule for everything here: expected conditions exit 0 with one readable
 line. Cron runs these commands unattended, and a tool that mails a stack trace
@@ -17,12 +17,12 @@ from pathlib import Path
 
 import click
 
-from nightshift import __version__
-from nightshift import adapters as adapter_registry
-from nightshift import cron, events, prompts, report, scheduler
-from nightshift.adapters.base import Event
-from nightshift.budget import Ledger
-from nightshift.config import (
+from nightaudit import __version__
+from nightaudit import adapters as adapter_registry
+from nightaudit import cron, events, prompts, report, scheduler
+from nightaudit.adapters.base import Event
+from nightaudit.budget import Ledger
+from nightaudit.config import (
     Config,
     ConfigError,
     config_path,
@@ -31,11 +31,11 @@ from nightshift.config import (
     parse_window,
     state_dir,
 )
-from nightshift.queue import Queue
+from nightaudit.queue import Queue
 
 DEFAULT_TASKS = ("code_review", "security_audit", "deps_audit")
 
-log = logging.getLogger("nightshift")
+log = logging.getLogger("nightaudit")
 
 
 def _setup_logging(verbose: bool) -> None:
@@ -138,9 +138,9 @@ def _render_event(event: Event) -> None:
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(__version__, prog_name="nightshift")
+@click.version_option(__version__, prog_name="nightaudit")
 def main() -> None:
-    """Your AI works the night shift.
+    """An audit doesn't change the books.
 
     Read-only reviews of your projects while you're busy, one digest every
     morning. The AI never modifies your code. Checks you configure yourself are
@@ -168,8 +168,8 @@ def _render_config(
     digest_dir: Path,
 ) -> str:
     lines: list[str] = [
-        "# nightshift config — https://github.com/kishormorol/nightshift",
-        "# Edit freely; `nightshift status` validates it.",
+        "# nightaudit config — https://github.com/kishormorol/nightaudit",
+        "# Edit freely; `nightaudit status` validates it.",
         "",
         "providers:",
     ]
@@ -226,10 +226,10 @@ def init(force: bool) -> None:
     if not enabled:
         raise click.ClickException(
             "No usable AI CLI found. Install Claude Code or Codex and re-run "
-            "`nightshift init`."
+            "`nightaudit init`."
         )
 
-    click.echo("Which projects should nightshift review?")
+    click.echo("Which projects should nightaudit review?")
     click.echo("Enter a path per line; press Enter on a blank line when done.\n")
     projects: list[tuple[str, Path, list[str]]] = []
     while True:
@@ -265,7 +265,7 @@ def init(force: bool) -> None:
 
     click.echo()
     windows_raw = click.prompt(
-        "When may nightshift run? (comma-separated HH:MM-HH:MM)",
+        "When may nightaudit run? (comma-separated HH:MM-HH:MM)",
         default="00:00-06:00",
         type=str,
     )
@@ -282,7 +282,7 @@ def init(force: bool) -> None:
         type=click.IntRange(min=0),
     )
     digest_dir = expand(
-        click.prompt("Where should digests go?", default="~/nightshift-reports", type=str)
+        click.prompt("Where should digests go?", default="~/nightaudit-reports", type=str)
     )
 
     text = _render_config(enabled, projects, windows, idle_minutes, digest_dir)
@@ -296,7 +296,7 @@ def init(force: bool) -> None:
         raise click.ClickException(f"generated config is invalid — please report this:\n{exc}")
     cfg.digest_dir.mkdir(parents=True, exist_ok=True)
 
-    click.echo("\nnightshift has no daemon — cron drives it. Add these lines:\n")
+    click.echo("\nnightaudit has no daemon — cron drives it. Add these lines:\n")
     for line in cron.entries():
         click.echo(f"  {line}")
     click.echo()
@@ -311,7 +311,7 @@ def init(force: bool) -> None:
     else:
         click.echo("Skipped — add them with `crontab -e` when you're ready.")
 
-    click.echo("\nTry a run right now:  nightshift run --now")
+    click.echo("\nTry a run right now:  nightaudit run --now")
 
 
 # ----------------------------------------------------------------- run
@@ -423,7 +423,7 @@ def _render_log_event(payload: dict) -> None:
 @click.option("-n", "--history", default=1, help="Replay this many finished runs first.")
 def watch(history: int) -> None:
     """Follow runs as they happen, including ones cron started."""
-    click.echo(click.style("nightshift · watching for runs — ctrl-c to stop", dim=True))
+    click.echo(click.style("nightaudit · watching for runs — ctrl-c to stop", dim=True))
 
     seen: set[Path] = set()
 

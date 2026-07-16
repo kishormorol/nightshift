@@ -1,6 +1,6 @@
-config    ~/.nightshift/config.yaml
-state     ~/.nightshift
-digests   ~/nightshift-reports
+config    ~/.nightaudit/config.yaml
+state     ~/.nightaudit
+digests   ~/nightaudit-reports
 
 providers
   ✓ claude_code ▓░░░░░ 1/6 today · 1/30 week
@@ -9,7 +9,7 @@ providers
 
 schedule  00:00-06:00 · needs 60m idle
 next run  Thu 00:00 (in 2h51m)
-up next   nightshift · security_audit
+up next   nightaudit · security_audit
 
 last runs
-  15:23  ok      nightshift · code_review
+  15:23  ok      nightaudit · code_review

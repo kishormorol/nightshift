@@ -1,0 +1,33 @@
+$ nightshift init
+Looking for AI CLIs on your PATH…
+
+  ✓ claude_code  2.1.211 (Claude Code)
+  ✗ codex  the codex adapter is not implemented yet — help wanted
+  ✗ copilot  the copilot adapter is not implemented yet — help wanted
+
+Which projects should nightshift review?
+Enter a path per line; press Enter on a blank line when done.
+
+  project path: ~/projects/nightshift
+    name [nightshift]:
+    available tasks: code_review, dead_links, deps_audit, docs_drift, security_audit
+    tasks [code_review, security_audit, deps_audit]:
+    ✓ nightshift · code_review, security_audit, deps_audit
+
+  project path:
+
+When may nightshift run? (comma-separated HH:MM-HH:MM) [00:00-06:00]:
+Minutes of provider idleness required before a run [60]:
+Where should digests go? [~/nightshift-reports]:
+
+Wrote ~/.nightshift/config.yaml
+
+nightshift has no daemon — cron drives it. Add these lines:
+
+  0 * * * * ~/.local/bin/nightshift run >> /tmp/nightshift-cron.log 2>&1
+  30 7 * * * ~/.local/bin/nightshift digest >> /tmp/nightshift-cron.log 2>&1
+
+Install them into your crontab now? [y/N]: y
+Installed.
+
+Try a run right now:  nightshift run --now

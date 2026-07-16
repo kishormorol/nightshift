@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="692" height="720" viewBox="0 0 692 720" role="img" aria-label="nightshift init — one-time setup">
+<title>nightshift init — one-time setup</title>
+<style>.t{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';font-size:13.0px;white-space:pre;dominant-baseline:middle}</style>
+<rect width="692" height="720" rx="10" fill="#0b1122"/>
+<rect width="692" height="43" rx="10" fill="#0d1326"/>
+<rect y="33" width="692" height="10" fill="#0d1326"/>
+<line x1="0" y1="43" x2="692" y2="43" stroke="#161d33"/>
+<circle cx="22" cy="22" r="4.5" fill="#26304d"/><circle cx="37" cy="22" r="4.5" fill="#26304d"/><circle cx="52" cy="22" r="4.5" fill="#26304d"/>
+<text class="t" x="74" y="23" fill="#5f6c80" font-size="11">nightshift init — one-time setup</text>
+<text class="t" x="674" y="23" fill="#ffd79a" font-size="11" text-anchor="end">☾</text>
+<text class="t" x="18.0" y="54" fill="#cdd6f4" textLength="132.7" lengthAdjust="spacing">$ nightshift init</text>
+<text class="t" x="18.0" y="74" fill="#cdd6f4" textLength="257.6" lengthAdjust="spacing">Looking for AI CLIs on your PATH…</text>
+<text class="t" x="18.0" y="114" fill="#cdd6f4" textLength="296.6" lengthAdjust="spacing">  ✓ claude_code  2.1.211 (Claude Code)</text>
+<text class="t" x="18.0" y="134" fill="#cdd6f4" textLength="507.4" lengthAdjust="spacing">  ✗ codex  the codex adapter is not implemented yet — help wanted</text>
+<text class="t" x="18.0" y="154" fill="#cdd6f4" textLength="538.6" lengthAdjust="spacing">  ✗ copilot  the copilot adapter is not implemented yet — help wanted</text>
+<text class="t" x="18.0" y="194" fill="#cdd6f4" textLength="312.3" lengthAdjust="spacing">Which projects should nightshift review?</text>
+<text class="t" x="18.0" y="214" fill="#cdd6f4" textLength="476.2" lengthAdjust="spacing">Enter a path per line; press Enter on a blank line when done.</text>
+<text class="t" x="18.0" y="254" fill="#cdd6f4" textLength="288.8" lengthAdjust="spacing">  project path: ~/projects/nightshift</text>
+<text class="t" x="18.0" y="274" fill="#cdd6f4" textLength="171.7" lengthAdjust="spacing">    name [nightshift]:</text>
+<text class="t" x="18.0" y="294" fill="#cdd6f4" textLength="655.7" lengthAdjust="spacing">    available tasks: code_review, dead_links, deps_audit, docs_drift, security_audit</text>
+<text class="t" x="18.0" y="314" fill="#cdd6f4" textLength="405.9" lengthAdjust="spacing">    tasks [code_review, security_audit, deps_audit]:</text>
+<text class="t" x="18.0" y="334" fill="#cdd6f4" textLength="452.8" lengthAdjust="spacing">    ✓ nightshift · code_review, security_audit, deps_audit</text>
+<text class="t" x="18.0" y="374" fill="#cdd6f4" textLength="117.1" lengthAdjust="spacing">  project path:</text>
+<text class="t" x="18.0" y="414" fill="#cdd6f4" textLength="538.6" lengthAdjust="spacing">When may nightshift run? (comma-separated HH:MM-HH:MM) [00:00-06:00]:</text>
+<text class="t" x="18.0" y="434" fill="#cdd6f4" textLength="437.2" lengthAdjust="spacing">Minutes of provider idleness required before a run [60]:</text>
+<text class="t" x="18.0" y="454" fill="#cdd6f4" textLength="374.7" lengthAdjust="spacing">Where should digests go? [~/nightshift-reports]:</text>
+<text class="t" x="18.0" y="494" fill="#cdd6f4" textLength="242.0" lengthAdjust="spacing">Wrote ~/.nightshift/config.yaml</text>
+<text class="t" x="18.0" y="534" fill="#cdd6f4" textLength="460.6" lengthAdjust="spacing">nightshift has no daemon — cron drives it. Add these lines:</text>
+<text class="t" x="18.0" y="574" fill="#cdd6f4" textLength="562.1" lengthAdjust="spacing">  0 * * * * ~/.local/bin/nightshift run &gt;&gt; /tmp/nightshift-cron.log 2&gt;&amp;1</text>
+<text class="t" x="18.0" y="594" fill="#cdd6f4" textLength="593.3" lengthAdjust="spacing">  30 7 * * * ~/.local/bin/nightshift digest &gt;&gt; /tmp/nightshift-cron.log 2&gt;&amp;1</text>
+<text class="t" x="18.0" y="634" fill="#cdd6f4" textLength="343.5" lengthAdjust="spacing">Install them into your crontab now? [y/N]: y</text>
+<text class="t" x="18.0" y="654" fill="#cdd6f4" textLength="78.1" lengthAdjust="spacing">Installed.</text>
+<text class="t" x="18.0" y="694" fill="#cdd6f4" textLength="327.9" lengthAdjust="spacing">Try a run right now:  nightshift run --now</text>
+</svg>

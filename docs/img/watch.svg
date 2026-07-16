@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="739" height="840" viewBox="0 0 739 840" role="img" aria-label="nightshift watch — a review in flight">
+<title>nightshift watch — a review in flight</title>
+<style>.t{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';font-size:13.0px;white-space:pre;dominant-baseline:middle}</style>
+<rect width="739" height="840" rx="10" fill="#0b1122"/>
+<rect width="739" height="43" rx="10" fill="#0d1326"/>
+<rect y="33" width="739" height="10" fill="#0d1326"/>
+<line x1="0" y1="43" x2="739" y2="43" stroke="#161d33"/>
+<circle cx="22" cy="22" r="4.5" fill="#26304d"/><circle cx="37" cy="22" r="4.5" fill="#26304d"/><circle cx="52" cy="22" r="4.5" fill="#26304d"/>
+<text class="t" x="74" y="23" fill="#5f6c80" font-size="11">nightshift watch — a review in flight</text>
+<text class="t" x="721" y="23" fill="#ffd79a" font-size="11" text-anchor="end">☾</text>
+<text class="t" x="18.0" y="54" fill="#cdd6f4" opacity="0.62" textLength="366.9" lengthAdjust="spacing">nightshift · watching for runs — ctrl-c to stop</text>
+<text class="t" x="18.0" y="94" fill="#89b4fa" textLength="15.6" lengthAdjust="spacing">┌ </text>
+<text class="t" x="33.6" y="94" fill="#cdd6f4" font-weight="600" textLength="187.4" lengthAdjust="spacing">nightshift · code_review</text>
+<text class="t" x="221.0" y="94" fill="#cdd6f4" opacity="0.62" textLength="195.2" lengthAdjust="spacing">   claude_code · 15:23:27</text>
+<text class="t" x="18.0" y="114" fill="#6fdd8b" textLength="31.2" lengthAdjust="spacing">  ⏺ </text>
+<text class="t" x="49.2" y="114" fill="#cdd6f4" opacity="0.62" textLength="163.9" lengthAdjust="spacing">~/projects/nightshift</text>
+<text class="t" x="18.0" y="134" fill="#cdd6f4" opacity="0.62" textLength="671.4" lengthAdjust="spacing">    I&#x27;ll start by exploring the repository structure to understand what I&#x27;m reviewing.</text>
+<text class="t" x="18.0" y="154" fill="#89dceb" textLength="31.2" lengthAdjust="spacing">  ⏺ </text>
+<text class="t" x="49.2" y="154" fill="#cdd6f4" font-weight="600" textLength="31.2" lengthAdjust="spacing">Glob</text>
+<text class="t" x="80.5" y="154" fill="#cdd6f4" opacity="0.62" textLength="117.1" lengthAdjust="spacing">(pattern: **/*)</text>
+<text class="t" x="18.0" y="174" fill="#cdd6f4" opacity="0.62" textLength="288.8" lengthAdjust="spacing">    ⎿  .git/info/exclude (+100 lines)</text>
+<text class="t" x="18.0" y="194" fill="#cba6f7" opacity="0.62" textLength="93.7" lengthAdjust="spacing">  ✻ thinking</text>
+<text class="t" x="18.0" y="214" fill="#cdd6f4" opacity="0.62" textLength="687.0" lengthAdjust="spacing">    The repo is a Python CLI called `nightshift`. Let me read the source files, skipping</text>
+<text class="t" x="18.0" y="234" fill="#cdd6f4" opacity="0.62" textLength="195.2" lengthAdjust="spacing">    the vendored `.venv`.</text>
+<text class="t" x="18.0" y="254" fill="#89dceb" textLength="31.2" lengthAdjust="spacing">  ⏺ </text>
+<text class="t" x="49.2" y="254" fill="#cdd6f4" font-weight="600" textLength="31.2" lengthAdjust="spacing">Glob</text>
+<text class="t" x="80.5" y="254" fill="#cdd6f4" opacity="0.62" textLength="226.4" lengthAdjust="spacing">(pattern: nightshift/**/*.py)</text>
+<text class="t" x="18.0" y="274" fill="#cdd6f4" opacity="0.62" textLength="320.1" lengthAdjust="spacing">    ⎿  nightshift/__init__.py (+17 lines)</text>
+<text class="t" x="18.0" y="294" fill="#89dceb" textLength="31.2" lengthAdjust="spacing">  ⏺ </text>
+<text class="t" x="49.2" y="294" fill="#cdd6f4" font-weight="600" textLength="31.2" lengthAdjust="spacing">Glob</text>
+<text class="t" x="80.5" y="294" fill="#cdd6f4" opacity="0.62" textLength="117.1" lengthAdjust="spacing">(pattern: *.md)</text>
+<text class="t" x="18.0" y="314" fill="#cdd6f4" opacity="0.62" textLength="413.7" lengthAdjust="spacing">    ⎿  nightshift/prompts/code_review.md (+100 lines)</text>
+<text class="t" x="18.0" y="334" fill="#cba6f7" opacity="0.62" textLength="93.7" lengthAdjust="spacing">  ✻ thinking</text>
+<text class="t" x="18.0" y="354" fill="#cdd6f4" opacity="0.62" textLength="663.6" lengthAdjust="spacing">    The Python package is small — 18 files. Let me read the core modules, focusing on</text>
+<text class="t" x="18.0" y="374" fill="#cdd6f4" opacity="0.62" textLength="577.7" lengthAdjust="spacing">    the areas the recent commits touched (streaming, watch, pid handling).</text>
+<text class="t" x="18.0" y="394" fill="#89dceb" textLength="31.2" lengthAdjust="spacing">  ⏺ </text>
+<text class="t" x="49.2" y="394" fill="#cdd6f4" font-weight="600" textLength="31.2" lengthAdjust="spacing">Read</text>
+<text class="t" x="80.5" y="394" fill="#cdd6f4" opacity="0.62" textLength="405.9" lengthAdjust="spacing">(file_path: ~/projects/nightshift/nightshift/cli.py)</text>
+<text class="t" x="18.0" y="414" fill="#cdd6f4" opacity="0.62" textLength="445.0" lengthAdjust="spacing">    ⎿  1 &quot;&quot;&quot;The ``nightshift`` command line. (+532 lines)</text>
+<text class="t" x="18.0" y="434" fill="#89dceb" textLength="31.2" lengthAdjust="spacing">  ⏺ </text>
+<text class="t" x="49.2" y="434" fill="#cdd6f4" font-weight="600" textLength="31.2" lengthAdjust="spacing">Read</text>
+<text class="t" x="80.5" y="434" fill="#cdd6f4" opacity="0.62" textLength="452.8" lengthAdjust="spacing">(file_path: ~/projects/nightshift/nightshift/scheduler.py)</text>
+<text class="t" x="18.0" y="454" fill="#cdd6f4" opacity="0.62" textLength="702.6" lengthAdjust="spacing">    ⎿  1 &quot;&quot;&quot;The gate: decide whether to run, pick the work, run it, record i… (+356 lines)</text>
+<text class="t" x="18.0" y="474" fill="#cba6f7" opacity="0.62" textLength="93.7" lengthAdjust="spacing">  ✻ thinking</text>
+<text class="t" x="18.0" y="494" fill="#cdd6f4" opacity="0.62" textLength="647.9" lengthAdjust="spacing">    Now the modules the recent commits touched — the event log, lock, and adapters.</text>
+<line x1="18.0" y1="514" x2="324" y2="514" stroke="#161d33"/><line x1="416" y1="514" x2="721" y2="514" stroke="#161d33"/><text class="t" x="370" y="514" fill="#5f6c80" font-size="10.5" text-anchor="middle">31 lines</text>
+<text class="t" x="18.0" y="534" fill="#cba6f7" opacity="0.62" textLength="93.7" lengthAdjust="spacing">  ✻ thinking</text>
+<text class="t" x="18.0" y="554" fill="#cdd6f4" opacity="0.62" textLength="663.6" lengthAdjust="spacing">    I&#x27;ve read all 18 modules of the `nightshift` package. Here are the findings, most</text>
+<text class="t" x="18.0" y="574" fill="#cdd6f4" opacity="0.62" textLength="132.7" lengthAdjust="spacing">    severe first.</text>
+<text class="t" x="18.0" y="594" fill="#cdd6f4" textLength="78.1" lengthAdjust="spacing">  🔴 HIGH </text>
+<text class="t" x="96.1" y="594" fill="#f38ba8" textLength="601.1" lengthAdjust="spacing">nightshift/adapters/claude_code.py · 267 — Replace the buffered `subprocess.…</text>
+<text class="t" x="18.0" y="614" fill="#cdd6f4" textLength="78.1" lengthAdjust="spacing">  🔴 HIGH </text>
+<text class="t" x="96.1" y="614" fill="#f38ba8" textLength="601.1" lengthAdjust="spacing">nightshift/adapters/claude_code.py · 366 — Cancel the timer *after* reaping,…</text>
+<text class="t" x="18.0" y="634" fill="#cdd6f4" textLength="78.1" lengthAdjust="spacing">  🟠 MED  </text>
+<text class="t" x="96.1" y="634" fill="#f9e2af" textLength="601.1" lengthAdjust="spacing">nightshift/lock.py · 121 — Have `release()` re-read the lockfile and unlink …</text>
+<text class="t" x="18.0" y="654" fill="#cdd6f4" textLength="78.1" lengthAdjust="spacing">  🟠 MED  </text>
+<text class="t" x="96.1" y="654" fill="#f9e2af" textLength="601.1" lengthAdjust="spacing">nightshift/cli.py · 404 — Skip logs that are already `events.is_stale()` ins…</text>
+<text class="t" x="18.0" y="674" fill="#cdd6f4" textLength="78.1" lengthAdjust="spacing">  🟡 LOW  </text>
+<text class="t" x="96.1" y="674" fill="#89dceb" textLength="601.1" lengthAdjust="spacing">nightshift/events.py · 38 — Derive `STALE_AFTER_S` from `cfg.timeout_s` rath…</text>
+<text class="t" x="18.0" y="694" fill="#cdd6f4" textLength="78.1" lengthAdjust="spacing">  🟡 LOW  </text>
+<text class="t" x="96.1" y="694" fill="#89dceb" textLength="601.1" lengthAdjust="spacing">nightshift/scheduler.py · 335 — Bill the ledger with `_now()` instead of the…</text>
+<text class="t" x="18.0" y="714" fill="#cdd6f4" textLength="78.1" lengthAdjust="spacing">  🟡 LOW  </text>
+<text class="t" x="96.1" y="714" fill="#89dceb" textLength="601.1" lengthAdjust="spacing">nightshift/cron.py · 27 — Shell-quote the interpreter path (`shlex.quote`) i…</text>
+<text class="t" x="18.0" y="734" fill="#cdd6f4" opacity="0.62" textLength="679.2" lengthAdjust="spacing">    One note on scope: the two HIGH findings are the same class of bug — the timeout is</text>
+<text class="t" x="18.0" y="754" fill="#cdd6f4" opacity="0.62" textLength="624.5" lengthAdjust="spacing">    not actually guaranteed to terminate the child tree — showing up on both the</text>
+<text class="t" x="18.0" y="774" fill="#cdd6f4" opacity="0.62" textLength="39.0" lengthAdjust="spacing">    …</text>
+<text class="t" x="18.0" y="794" fill="#89b4fa" textLength="15.6" lengthAdjust="spacing">└ </text>
+<text class="t" x="33.6" y="794" fill="#6fdd8b" font-weight="600" textLength="31.2" lengthAdjust="spacing">✓ ok</text>
+<text class="t" x="64.8" y="794" fill="#cdd6f4" opacity="0.62" textLength="163.9" lengthAdjust="spacing">   2m18s · 7 findings</text>
+</svg>

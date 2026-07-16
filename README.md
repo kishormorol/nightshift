@@ -7,7 +7,7 @@
 Put your idle Claude Code subscription to work — read-only reviews of your
 projects while you're busy, one digest every morning.
 
-![Two read-only reviews, then the morning digest](docs/demo.svg)
+![A real code_review of this repo: two HIGH findings, then the morning digest](docs/demo.svg)
 
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
@@ -16,17 +16,158 @@ projects while you're busy, one digest every morning.
 
 ---
 
+## What this is
+
+You already pay for Claude Code. It sits idle most of the day, and definitely
+all night. nightshift spends that idle time reviewing the projects you point it
+at, and leaves the results in one Markdown file you read with your coffee.
+
+It never edits your code. It has no daemon and no server — cron calls it, it
+decides whether to run, and it goes back to sleep. Everything it knows lives in
+two directories you can delete at any time.
+
+That's the whole tool. The rest of this page is how to use it.
+
+## Before you start
+
+- **Python 3.10+**
+- **[Claude Code](https://claude.com/claude-code)**, installed and already
+  logged in. Run `claude --version` — if that works, nightshift will find it.
+- **cron** — standard on macOS and Linux. Windows works via WSL.
+
+You do not need an API key. nightshift drives the same `claude` CLI you use by
+hand, on the subscription you already have.
+
+## Install it
+
 ```bash
 pipx install nightshift-cli
-nightshift init
+```
+
+(`pip install nightshift-cli` works too; pipx just keeps it out of your other
+environments. The command is `nightshift` either way.)
+
+## Set it up
+
+Run `nightshift init` once. It finds your AI CLIs, asks which projects to
+review and when, writes a config file, and offers to install the cron lines
+that drive everything:
+
+![nightshift init walks you through detection, projects, schedule, and cron](docs/img/init.svg)
+
+Four questions, and every one has a working default you can accept with Enter:
+
+| It asks | It means | Default |
+| --- | --- | --- |
+| **project path** | A repo to review. Enter as many as you like; blank line to finish. | — |
+| **tasks** | Which reviews to run on it. | `code_review, security_audit, deps_audit` |
+| **windows** | Hours it's allowed to run, local time. | `00:00-06:00` |
+| **idle minutes** | How long you must be away from Claude Code first. | `60` |
+
+Everything it writes goes to `~/.nightshift/config.yaml`. Edit it by hand
+whenever you like — it's plain YAML, and `nightshift status` validates it.
+
+## See it work
+
+Don't wait until tonight. Force a run right now:
+
+```bash
 nightshift run --now
 ```
 
-`init` detects the AI CLIs you already have, registers your projects, and
-prints the two cron lines that drive everything. `run --now` does one review
-immediately so you can see it work.
+`--now` skips the window and idle checks, so you get a review immediately. At a
+terminal, nightshift streams it live — you see the same reads and reasoning you
+would if you'd run `claude` yourself:
 
----
+![A live nightshift run: reads, reasoning, then seven findings ranked by severity](docs/img/watch.svg)
+
+That is a real run of nightshift against its own repository, and those are real
+bugs. Two of them became commits the same evening: a run that could hang forever
+holding the scheduler's lock (`claude_code.py:366`), and a lock that could be
+released by the wrong owner (`lock.py:121`).
+
+Findings are ranked 🔴 HIGH, 🟠 MED, 🟡 LOW, and each one cites a `file:line`
+so you can jump straight to it.
+
+## Then forget about it
+
+If you let `init` install the cron lines, you're already done. Cron calls
+`nightshift run` every hour; the command decides for itself whether to act and
+exits quietly when the answer is no:
+
+```
+0 * * * *   nightshift run     # gated: window → idle → budget → lock
+30 7 * * *  nightshift digest  # render yesterday's findings
+```
+
+A run happens only when **all four gates** open:
+
+1. **Window** — the clock is inside one of your `schedule.windows`.
+2. **Idle** — you haven't touched Claude Code for `idle_minutes`. nightshift
+   watches `~/.claude/projects` and stays out of your way while you're working.
+3. **Budget** — you have runs left today and this week.
+4. **Lock** — no other run is already in flight.
+
+Any gate saying no is normal, not an error. It prints one line and exits 0:
+
+```
+$ nightshift run
+nothing to do — outside configured windows (00:00-06:00)
+```
+
+Each run pops one `(project, task)` pair from a persistent round-robin queue,
+so every project gets its turn and a noisy one can't starve the rest.
+
+To check on it any time, ask:
+
+![nightshift status: budget bars, next window, what's up next, recent runs](docs/img/status.svg)
+
+And to watch a run that cron started — including one already in progress —
+`nightshift watch` follows along live and replays the last finished run first.
+
+## Read the digest
+
+Every run appends to `~/nightshift-reports/YYYY-MM-DD/`. Once a day
+`nightshift digest` renders those into one file, `DIGEST-YYYY-MM-DD.md`:
+
+```markdown
+# Nightshift · morning digest
+
+Wed Jul 15, 2026 · generated 17:57 local · 1 project · 1 run
+
+## Budget remaining
+
+- `claude_code` ▓░░░░░ 1/6 today · 1/30 week
+
+## Highlights
+
+- 🔴 Replace the buffered `subprocess.run(..., timeout=...)` with the same `Popen` +
+  `os.killpg` treatment the streaming path uses … — _nightshift · code_review_ ·
+  `nightshift/adapters/claude_code.py:267`
+- 🟠 Have `release()` re-read the lockfile and unlink only when the recorded pid is
+  still our own … — _nightshift · code_review_ · `nightshift/lock.py:121`
+
+## Run log
+
+| project | task | provider | status | dur | time |
+| --- | --- | --- | --- | --- | --- |
+| nightshift | code_review | claude_code | ok | 2m18s | 15:23 |
+```
+
+Highest severity first, grouped by project, read in twenty seconds.
+**[Here is that digest in full](docs/sample-digest.md)** — a real one, not a
+mock-up.
+
+Skipped and failed runs stay in the log. A run that didn't happen is
+information too, and silently dropping it is how you stop trusting the tool.
+
+Want it early, or for a specific day?
+
+```bash
+nightshift digest                    # today, written to the digest dir
+nightshift digest --date 2026-07-14  # a past day
+nightshift digest --stdout           # print it instead of writing it
+```
 
 ## 0 files touched
 
@@ -59,54 +200,11 @@ treated as one. The flags are.
 nightshift also never touches your git state: no commits, no branches, no
 pushes. It reads, and it writes exactly one place — the digest directory.
 
-## The digest
+## Don't let it burn your quota
 
-Every run appends to `~/nightshift-reports/YYYY-MM-DD/`, and once a day
-`nightshift digest` renders those into one file:
-
-```markdown
-# Nightshift · morning digest
-
-Tue Jul 14, 2026 · generated 07:30 local · 3 projects · 5 runs
-
-## Budget remaining
-
-- `claude_code` ▓▓▓░░░ 3/6 today · 14/30 week
-
-## Highlights
-
-- 🔴 User input concatenated into SQL — switch to a parameterized statement — _payments-web · security_audit_ · `src/search/query.ts:88`
-- 🔴 Base image `python:latest` is unpinned — pin to `python:3.12.4-slim` — _infra-terraform · deps_audit_ · `docker/Dockerfile:1`
-- 🟠 Internal `/metrics` route has no auth guard — add `require_service_token` — _acme-api · code_review_ · `api/routes/metrics.py:42`
-
-## By project
-
-### acme-api
-
-2 findings
-
-- 🟠 Internal `/metrics` route has no auth guard — add `require_service_token` — _code_review_ · `api/routes/metrics.py:42`
-- 🟡 `make dev` documented but the target is now `make serve` — _docs_drift_ · `README.md:31`
-
-## Run log
-
-| project | task | provider | status | dur | time |
-| --- | --- | --- | --- | --- | --- |
-| acme-api | code_review | claude_code | ok | 1m12s | 01:04 |
-| acme-api | docs_drift | claude_code | ok | 22s | 01:06 |
-| payments-web | security_audit | claude_code | ok | 2m03s | 02:15 |
-| infra-terraform | deps_audit | claude_code | timeout · no output after 600s | 10m00s | 03:30 |
-| — | — | claude_code | skipped · budget · daily budget spent (6/6 today) | — | 04:00 |
-```
-
-Highest severity first, grouped by project, read in twenty seconds. Skipped and
-failed runs stay in the log — a run that didn't happen is information too, and
-silently dropping it is how you stop trusting the tool.
-
-## Budget
-
-nightshift runs on the subscription you already pay for, which means the fastest
-way for it to become a problem is to burn your quota. So it counts.
+nightshift runs on the subscription you already pay for, which means the
+fastest way for it to become a problem is to burn through your quota. So it
+counts.
 
 ```yaml
 providers:
@@ -124,36 +222,12 @@ providers:
 - **`--now` skips the window and idle checks, never the budget check.**
 - **At the cap it stops and says so**, once, as a `skipped` row in the digest.
 
-A run also only starts if it's inside one of your `schedule.windows` and the
-provider has been idle for `idle_minutes` — nightshift watches
-`~/.claude/projects` and stays out of your way while you're actually working.
-
-## How it works
-
-No daemon. Cron calls `nightshift run` hourly and the command decides for
-itself whether to act, exiting 0 quietly when the answer is no:
-
-```
-0 * * * *   nightshift run     # gated: window → idle → budget → lock
-30 7 * * *  nightshift digest  # render yesterday's findings
-```
-
-Each run pops one `(project, task)` pair from a persistent round-robin queue,
-so every project gets its turn and a noisy one can't starve the rest.
-
-## Commands
-
-| command | what it does |
-| --- | --- |
-| `nightshift init` | Detect CLIs, register projects, write config, offer to install cron |
-| `nightshift run [--now]` | One gated run. `--now` skips window+idle checks |
-| `nightshift digest [--date]` | Render `DIGEST-YYYY-MM-DD.md` |
-| `nightshift status` | Budget bars, recent runs, next window, provider health |
+Start low. Six runs a day is already a lot of review.
 
 ## Configuration
 
-Lives at `~/.nightshift/config.yaml` (override the whole state directory with
-`NIGHTSHIFT_HOME`). `nightshift status` validates it.
+Lives at `~/.nightshift/config.yaml`. Here it is in full — this is every knob
+there is:
 
 ```yaml
 providers:
@@ -176,18 +250,81 @@ run:
   timeout_s: 600
 ```
 
+Run `nightshift status` after editing — it validates the file and tells you
+exactly what's wrong if anything is.
+
+Set `NIGHTSHIFT_HOME` to move the whole state directory somewhere else.
+
 ## Tasks
 
 A task is just a prompt template. Five ship with nightshift:
 
-`code_review` · `security_audit` · `deps_audit` · `docs_drift` · `dead_links`
+| task | what it looks for |
+| --- | --- |
+| `code_review` | Bugs, races, and correctness problems |
+| `security_audit` | Injection, authz gaps, unsafe defaults |
+| `deps_audit` | Unpinned, stale, or risky dependencies |
+| `docs_drift` | Docs that no longer match the code |
+| `dead_links` | Links and image paths pointing at things that aren't there |
 
-Drop any `.md` file into `~/.nightshift/prompts/` and its filename becomes a
-valid task name. Use a shipped name to override that template.
+Give each project the tasks that suit it — a Terraform repo probably wants
+`security_audit` and `deps_audit`, not `dead_links`.
+
+**Write your own:** drop any `.md` file into `~/.nightshift/prompts/` and its
+filename becomes a valid task name. Use a shipped name to override that
+template.
 
 Templates must tell the model to prefix each finding with `HIGH`, `MED`, or
 `LOW` and cite a `file:line`. Parsing is lenient — an unlabelled finding is
 kept and filed as `LOW` rather than dropped.
+
+## Commands
+
+| command | what it does |
+| --- | --- |
+| `nightshift init` | Detect CLIs, register projects, write config, offer to install cron |
+| `nightshift run [--now]` | One gated run. `--now` skips window+idle checks |
+| `nightshift watch [-n N]` | Follow runs live, including ones cron started |
+| `nightshift digest [--date]` | Render `DIGEST-YYYY-MM-DD.md` |
+| `nightshift status` | Budget bars, recent runs, next window, provider health |
+
+Each takes `--help`.
+
+## Troubleshooting
+
+**`nothing to do — outside configured windows (00:00-06:00)`**
+Working as designed — it's not in a window. Use `nightshift run --now` to run
+anyway, or widen `schedule.windows`.
+
+**`nothing to do — claude_code used 12m ago (needs 60m idle)`**
+You've been using Claude Code, so nightshift is staying out of your way. Use
+`--now`, or lower `idle_minutes` (`0` disables the check).
+
+**`nothing to do — claude_code: daily budget spent (6/6 today)`**
+Out of quota for today. Raise `max_runs_per_day` if you want more.
+
+**`No usable AI CLI found`**
+`claude` isn't on your `PATH`. Check `claude --version` in the same shell.
+
+**Cron never runs it.** Cron uses a minimal `PATH`, which is why `init` writes
+the absolute path to the binary into your crontab. Check
+`/tmp/nightshift-cron.log` — everything cron runs is logged there. On macOS,
+cron may also need Full Disk Access to read your projects.
+
+**A run is stuck.** Runs are killed at `run.timeout_s` (default 600s) and
+recorded as `timeout`. There is nothing to clean up by hand.
+
+## Uninstall
+
+nightshift keeps no state anywhere else, so removing it is three lines:
+
+```bash
+crontab -e                    # delete the block marked "# nightshift (managed…)"
+rm -rf ~/.nightshift          # config, ledger, queue, event logs
+pipx uninstall nightshift-cli
+```
+
+Your digests in `~/nightshift-reports` are yours — delete them or don't.
 
 ## Codex & Copilot adapters: help wanted
 
@@ -210,6 +347,9 @@ python -m venv .venv && .venv/bin/pip install -e ".[dev]"
 The test suite spends zero quota: the scheduler, budget, queue, and digest are
 covered against a `FakeAdapter`, and the Claude Code adapter is tested with a
 mocked `subprocess`. No test ever shells out to a real AI CLI.
+
+The images on this page are generated from real captured output — see
+[docs/RECORDING.md](docs/RECORDING.md) if you change what the CLI prints.
 
 ## License
 

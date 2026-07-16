@@ -31,6 +31,8 @@ DIM = "#5f6c80"
 FAINT = "#6472a0"
 OK = "#6fdd8b"
 MOON = "#ffd79a"
+HIGH = "#f38ba8"
+MED = "#f9e2af"
 
 FONT = "ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
 FS = 13
@@ -39,22 +41,28 @@ PAD_X = 18
 TOP = 46
 
 #: (text, colour). `None` renders a blank spacer line.
+#:
+#: A real `code_review` of this repo, run on 2026-07-15. The MED shown here is
+#: the lock-release race fixed in ff1ae5c; the HIGH is a real limitation of the
+#: buffered path, still documented as such in `claude_code.py`. The transcript
+#: is trimmed to the lines that carry the story; every line is one the CLI
+#: printed.
 TRANSCRIPT: list[tuple[str, str] | None] = [
     ("$ nightshift run --now", ACCENT),
-    ("     ok  gradagent · security_audit (claude_code, 44s)", FG),
-    ("         3 findings", DIM),
-    None,
-    ("$ nightshift run --now", ACCENT),
-    ("     ok  payments-web · deps_audit (claude_code, 22s)", FG),
-    ("         2 findings", DIM),
+    ("  ⏺ Read(file_path: nightshift/adapters/claude_code.py)", FAINT),
+    ("  ⏺ Read(file_path: nightshift/lock.py)", FAINT),
+    ("  🔴 HIGH nightshift/adapters/claude_code.py · 267 — Replace the…", HIGH),
+    ("  🟠 MED  nightshift/lock.py · 121 — Have `release()` re-read the…", MED),
+    ("     ok  nightshift · code_review (claude_code, 2m18s)", FG),
+    ("         7 findings", DIM),
     None,
     ("$ nightshift status", ACCENT),
-    ("  ✓ claude_code ▓▓░░░░ 2/6 today · 2/30 week", FG),
-    ("  next run  now (a window is open)", FAINT),
-    ("  up next   acme-api · code_review", FAINT),
+    ("  ✓ claude_code ▓░░░░░ 1/6 today · 1/30 week", FG),
+    ("next run  Thu 00:00 (in 2h51m)", FAINT),
+    ("up next   nightshift · security_audit", FAINT),
     None,
     ("$ nightshift digest", ACCENT),
-    ("~/nightshift-reports/DIGEST-2026-07-15.md  (2 runs)", OK),
+    ("~/nightshift-reports/DIGEST-2026-07-15.md  (1 run)", OK),
 ]
 
 STEP = 0.62  # seconds between lines

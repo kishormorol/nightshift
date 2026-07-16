@@ -79,6 +79,55 @@ def test_stale_threshold_scales_with_configured_timeout(tmp_path):
     assert Lock(path, timeout_s=60).is_stale() is True
 
 
+def test_stale_threshold_sizes_for_every_attempt(tmp_path):
+    path = tmp_path / "lock"
+    path.write_text(
+        json.dumps({"pid": 999999, "acquired_at": time.time() - 1400}), encoding="utf-8"
+    )
+
+    # One attempt goes stale at 2 × 600s — 1400s is abandoned.
+    assert Lock(path, timeout_s=600, attempts=1).is_stale() is True
+    # Two attempts go stale at 2 × 2 × 600s — the same lock is a slow run.
+    assert Lock(path, timeout_s=600, attempts=2).is_stale() is False
+
+
+def test_a_holder_that_used_its_whole_retry_budget_is_still_live(tmp_path):
+    """The regression `attempts` exists to prevent.
+
+    A holder that spent every attempt at its full timeout is as old as a healthy
+    run can legitimately get. Size the threshold for one attempt and that run
+    lands *on* it — any overhead tips it past, its live lock is broken, and a
+    second run starts alongside it.
+    """
+    path = tmp_path / "lock"
+    lock = Lock(path, timeout_s=600, attempts=2)
+    overran_but_healthy = time.time() - (lock.max_run_s + 60)
+    path.write_text(
+        json.dumps({"pid": 999999, "acquired_at": overran_but_healthy}), encoding="utf-8"
+    )
+
+    assert lock.is_stale() is False
+    with pytest.raises(LockBusy):
+        lock.acquire()
+
+
+def test_attempts_below_one_cannot_collapse_the_threshold(tmp_path):
+    """A bad `attempts` must not make every lock instantly stale.
+
+    Zero would zero out `max_run_s`, so any lock at all would look abandoned and
+    the lock would stop excluding anything.
+    """
+    path = tmp_path / "lock"
+    path.write_text(
+        json.dumps({"pid": 999999, "acquired_at": time.time() - 30}), encoding="utf-8"
+    )
+    lock = Lock(path, timeout_s=600, attempts=0)
+
+    assert lock.attempts == 1
+    assert lock.stale_after_s == 1200
+    assert lock.is_stale() is False
+
+
 def test_unreadable_lock_falls_back_to_mtime_and_can_go_stale(tmp_path):
     path = tmp_path / "lock"
     path.write_text("this is not json", encoding="utf-8")

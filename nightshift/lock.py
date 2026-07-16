@@ -14,7 +14,10 @@ from nightshift.config import state_dir
 
 log = logging.getLogger("nightshift")
 
-#: A lock older than ``STALE_MULTIPLIER × run.timeout_s`` is presumed abandoned.
+#: How far past the longest legitimate run a lock may live before we presume
+#: its holder died. This multiplies the *whole* run budget — every attempt at
+#: its full timeout — and must exceed it rather than equal it: a threshold a
+#: healthy run can reach is a live lock waiting to be broken.
 STALE_MULTIPLIER = 2
 
 
@@ -40,13 +43,34 @@ class Lock:
     """An exclusive lock built on ``O_CREAT | O_EXCL``.
 
     Stale locks — left behind by a run that was killed before it could clean up
-    — are broken automatically once they exceed twice the run timeout, which is
-    strictly longer than any healthy run can survive.
+    — are broken automatically once they outlive :attr:`stale_after_s`.
+
+    That threshold is measured against the longest a healthy holder can take,
+    which is every attempt running to its full timeout, not one. This docstring
+    used to say "twice the run timeout, strictly longer than any healthy run can
+    survive"; with two attempts allowed and a multiplier of two those were the
+    same number, so a healthy run that used its whole budget landed exactly on
+    the threshold and any overhead put it past. Its live lock would be broken
+    and a second run would start beside it — the one thing the lock exists to
+    prevent.
+
+    Callers that retry must therefore say so via ``attempts``, or the lock will
+    size the threshold for a single run.
     """
 
-    def __init__(self, path: Path | None = None, timeout_s: int = 600):
+    def __init__(
+        self,
+        path: Path | None = None,
+        timeout_s: int = 600,
+        attempts: int = 1,
+    ):
         self.path = path or lock_path()
         self.timeout_s = timeout_s
+        #: Total tries the holder may make, each up to ``timeout_s`` — the first
+        #: one included, not retries stacked on top of it. ``attempts=2`` is one
+        #: try and one retry, matching the scheduler's ``range(1, MAX_ATTEMPTS + 1)``.
+        #: Read as "retries" it would double the threshold it was meant to set.
+        self.attempts = max(int(attempts), 1)
         self._held = False
         #: Stamp we wrote when we took the lock. Together with the pid it is
         #: what makes a lockfile *ours* rather than merely present — see
@@ -55,8 +79,13 @@ class Lock:
         self._acquired_at: float | None = None
 
     @property
+    def max_run_s(self) -> float:
+        """The longest a healthy holder can legitimately take."""
+        return self.timeout_s * self.attempts
+
+    @property
     def stale_after_s(self) -> float:
-        return self.timeout_s * STALE_MULTIPLIER
+        return self.max_run_s * STALE_MULTIPLIER
 
     def read(self) -> LockInfo | None:
         try:

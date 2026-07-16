@@ -259,7 +259,9 @@ def run_once(
 
     # 4. Lock.
     events.prune()
-    lock = Lock(timeout_s=cfg.timeout_s)
+    # The lock must size its stale threshold against the whole budget we might
+    # spend, not one attempt of it, or a healthy run that retries looks dead.
+    lock = Lock(timeout_s=cfg.timeout_s, attempts=MAX_ATTEMPTS)
     try:
         lock.acquire()
     except LockBusy as exc:

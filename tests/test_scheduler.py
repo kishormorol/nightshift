@@ -201,13 +201,51 @@ def test_a_live_lock_blocks_the_run(night_cfg, get_fake, fake_adapter, isolated_
 
 def test_a_stale_lock_is_broken(night_cfg, get_fake, fake_adapter, isolated_home):
     path = isolated_home / "lock"
+    # A day old — abandoned under any threshold the scheduler could compute.
+    # This used to say `600 * 3`, which quietly encoded the arithmetic of a
+    # single 600s attempt, and broke the moment the lock started sizing for
+    # retries. Where the boundary actually falls is test_lock.py's business.
     path.write_text(
-        json.dumps({"pid": 999999, "acquired_at": time.time() - 600 * 3}),
+        json.dumps({"pid": 999999, "acquired_at": time.time() - 86_400}),
         encoding="utf-8",
     )
     outcome = run(night_cfg, get_fake)
     assert outcome.ran is True
     assert len(fake_adapter.calls) == 1
+
+
+def test_a_lock_held_by_a_retrying_run_is_left_alone(
+    night_cfg, get_fake, fake_adapter, isolated_home
+):
+    """A holder that retried is slow, not dead.
+
+    The age is derived rather than hardcoded so it stays *between* the two
+    thresholds if `timeout_s` or MAX_ATTEMPTS ever move — a literal here would
+    fail for arithmetic reasons having nothing to do with the behaviour, which
+    is exactly how test_a_stale_lock_is_broken above broke.
+
+    The scheduler grants MAX_ATTEMPTS, so it must size the lock for all of them.
+    Size it for one and this live lock is broken, and a second run starts beside
+    the first.
+    """
+    path = isolated_home / "lock"
+    one_try = Lock(path, timeout_s=night_cfg.timeout_s, attempts=1).stale_after_s
+    retrying = Lock(
+        path, timeout_s=night_cfg.timeout_s, attempts=scheduler.MAX_ATTEMPTS
+    ).stale_after_s
+    assert one_try < retrying, "MAX_ATTEMPTS > 1, or this test asserts nothing"
+
+    # Comfortably past what a single attempt could justify, comfortably inside
+    # what the full retry budget can.
+    age = (one_try + retrying) / 2
+    path.write_text(
+        json.dumps({"pid": 999999, "acquired_at": time.time() - age}),
+        encoding="utf-8",
+    )
+    outcome = run(night_cfg, get_fake)
+    assert outcome.ran is False
+    assert "in progress" in outcome.reason
+    assert fake_adapter.calls == []
 
 
 def test_lock_is_released_after_a_run(night_cfg, get_fake, isolated_home):

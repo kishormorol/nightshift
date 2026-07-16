@@ -7,21 +7,25 @@ build-backend = "hatchling.build"
 # NMR plotting tool, so the package installs as `nightshift-cli` while the
 # console script below stays `nightshift` — the two are independent.
 name = "nightshift-cli"
-version = "0.1.0"
+version = "0.1.2"
 description = "Your AI works the night shift — read-only reviews of your projects while you're busy, one digest every morning."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Md. Kishor Morol" }]
-keywords = ["ai", "code-review", "claude-code", "automation", "cli"]
+keywords = ["ai", "code-review", "claude-code", "codex", "automation", "cli"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
+  # cron and the CLIs' sandboxes; Windows only via WSL, which is Linux.
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
@@ -38,6 +42,20 @@ nightshift = "nightshift.cli:main"
 [project.urls]
 Homepage = "https://github.com/kishormorol/nightshift"
 Source = "https://github.com/kishormorol/nightshift"
+Issues = "https://github.com/kishormorol/nightshift/issues"
+
+[tool.hatch.build.targets.sdist]
+# Allowlist, not excludes: the marketing site's node_modules is only ignored by a
+# nested site/.gitignore, which hatchling's default selection does not honor.
+include = [
+  "/nightshift",
+  "/tests",
+  "/docs",
+  "/README.md",
+  "/LICENSE",
+  "/SPEC.md",
+  "/TODO.md",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["nightshift"]

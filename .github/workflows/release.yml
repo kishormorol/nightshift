@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+
+      - name: The tag must match the version, and the version must agree with itself
+        # A tag that disagrees with pyproject publishes a version nobody asked
+        # for, under a name the git history does not have. PyPI will not let it
+        # be taken back, so disagree here instead.
+        #
+        # All three must say the same thing: the tag, what pyproject publishes,
+        # and what `nightshift --version` reports. CI holds the last two
+        # together on every PR, but a tag push does not run CI — so check here
+        # too rather than trust that it did.
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(python -c 'import tomllib,pathlib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
+          package="$(python -c 'import nightshift; print(nightshift.__version__)')"
+          test "$tag" = "$version" || {
+            echo "tag $GITHUB_REF_NAME != pyproject version $version"
+            exit 1
+          }
+          test "$version" = "$package" || {
+            echo "pyproject says $version, the package reports $package"
+            exit 1
+          }
+
+      - name: The sdist must not carry the landing page
+        # site/ holds a Next.js app whose node_modules is ignored only by a
+        # nested site/.gitignore, which hatchling does not honor. That once made
+        # a 139MB sdist that PyPI refused. pyproject's sdist include list is an
+        # allowlist to prevent it; this is the check that the allowlist holds.
+        run: |
+          ! tar -tzf dist/*.tar.gz | grep -q '/site/'
+
+      - name: The sdist must stay small
+        # A source dist for a pure-Python CLI has no business being megabytes.
+        # Any generated tree that slips into the allowlist trips this long
+        # before it reaches PyPI's 100MB hard limit.
+        run: |
+          size="$(wc -c < dist/*.tar.gz)"
+          test "$size" -lt 1000000 || {
+            echo "sdist is $size bytes; something generated is being packaged"
+            exit 1
+          }
+
+      - name: The sdist must build and install on its own
+        # The wheel is what most people install, so a broken sdist stays quiet
+        # until someone runs --no-binary or packages this downstream. Install it
+        # from source here, where it is cheap to notice.
+        run: |
+          python -m venv /tmp/sdist-check
+          /tmp/sdist-check/bin/pip install --no-binary nightshift-cli dist/*.tar.gz
+          /tmp/sdist-check/bin/nightshift --version
+
+      - run: twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    # Only a tag publishes. workflow_dispatch still builds and runs every guard
+    # above, which is the point — you can exercise this workflow on a branch
+    # without putting anything on PyPI. Without this, a manual run would skip
+    # the tag/version check (it has nothing to check) and publish whatever
+    # version pyproject happened to carry, which PyPI would never let us undo.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      # Trusted publishing mints a short-lived OIDC token for PyPI, so this repo
+      # never holds a long-lived API token that could leak or need rotating.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

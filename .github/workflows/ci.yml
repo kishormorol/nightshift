@@ -56,6 +56,61 @@ jobs:
         run: |
           ! python -m zipfile -l dist/*.whl | grep -q 'site/'
 
+      - name: The sdist must carry what it takes to build and test
+        # An allowlist can't silently lose a directory the way a denylist lets
+        # one in, but it can silently drop one. Anyone running `pip install
+        # --no-binary` builds from these files.
+        #
+        # Every other sdist guard lives in release.yml and so only runs on a
+        # tag. This one runs on the PR that would break the allowlist, which is
+        # where the mistake is still cheap.
+        run: |
+          tar -tzf dist/*.tar.gz | grep -q 'nightshift/prompts/code_review.md'
+          tar -tzf dist/*.tar.gz | grep -q 'tests/'
+
+      - name: The version must not drift
+        # pyproject's version is what PyPI publishes; __init__'s is what
+        # `nightshift --version` prints. They are two hand-kept literals, so a
+        # bump can touch one and miss the other — and the release workflow
+        # compares the tag against pyproject alone. Drift would publish a
+        # package whose own --version contradicts the tag it shipped under,
+        # to a place PyPI does not allow taking it back from.
+        run: |
+          pyproject="$(python -c 'import tomllib,pathlib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
+          package="$(python -c 'import nightshift; print(nightshift.__version__)')"
+          test "$pyproject" = "$package" || {
+            echo "pyproject says $pyproject, the package reports $package"
+            exit 1
+          }
+
+      - name: The classifiers must match the Pythons we test
+        # The classifiers are what PyPI advertises; the matrix above is what
+        # actually passes. Two hand-kept lists, and only one of them ever runs,
+        # so a new Python can be tested for months while PyPI still calls it
+        # unsupported — which is exactly how 3.13 missed the 0.1.1 release.
+        run: |
+          pip install -q pyyaml
+          python - <<'PY'
+          import pathlib, sys, tomllib, yaml
+
+          project = tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]
+          advertised = {
+              c.rsplit("::", 1)[1].strip()
+              for c in project["classifiers"]
+              if c.startswith("Programming Language :: Python :: ")
+          }
+          tested = set(
+              yaml.safe_load(pathlib.Path(".github/workflows/ci.yml").read_text())
+              ["jobs"]["test"]["strategy"]["matrix"]["python-version"]
+          )
+          if advertised != tested:
+              sys.exit(
+                  f"PyPI would advertise {sorted(advertised)} "
+                  f"but CI tests {sorted(tested)}"
+              )
+          print(f"classifiers match the matrix: {sorted(tested)}")
+          PY
+
       - name: The README demo must match its generator
         # docs/demo.svg is generated and committed. Editing make-demo.py without
         # re-running it would leave the README showing stale CLI output.

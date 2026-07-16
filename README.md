@@ -9,6 +9,7 @@ projects while you're busy, one digest every morning.
 
 ![A real code_review of this repo: two HIGH findings, then the morning digest](docs/demo.svg)
 
+[![PyPI](https://img.shields.io/pypi/v/nightshift-cli)](https://pypi.org/project/nightshift-cli/)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 
@@ -45,10 +46,12 @@ the subscriptions you already have.
 
 ```bash
 pipx install nightshift-cli
+nightshift --version
 ```
 
-(`pip install nightshift-cli` works too; pipx just keeps it out of your other
-environments. The command is `nightshift` either way.)
+(`uv tool install nightshift-cli` and `pip install nightshift-cli` work too;
+pipx and uv just keep it out of your other environments. The command is
+`nightshift` either way.)
 
 ## Set it up
 

@@ -3,6 +3,6 @@
 Read-only reviews of your projects while you're busy, one digest every morning.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 APP_NAME = "nightaudit"

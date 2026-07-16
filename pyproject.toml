@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 # suffix because PyPI's `nightshift` belongs to Ian Fucci's NMR plotting tool;
 # `nightaudit` is unclaimed, so that split is gone.
 name = "nightaudit"
-version = "0.3.0"
+version = "0.4.0"
 description = "An audit doesn't change the books — read-only reviews of your projects while you're busy, one digest every morning."
 readme = "README.md"
 requires-python = ">=3.10"

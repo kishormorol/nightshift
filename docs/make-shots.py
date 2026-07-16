@@ -83,8 +83,11 @@ class Style:
                 self.bold = True
             elif p == "2":
                 self.dim = True
-            elif p in ("22", "39"):
+            elif p == "22":
+                # Normal intensity — cancels bold *and* dim, leaves the colour.
                 self.bold = self.dim = False
+            elif p == "39":
+                # Default foreground — leaves intensity alone.
                 self.fg = FG
             elif p in ANSI_FG:
                 self.fg = ANSI_FG[p]

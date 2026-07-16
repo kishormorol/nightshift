@@ -55,14 +55,17 @@ that drive everything:
 
 ![nightshift init walks you through detection, projects, schedule, and cron](docs/img/init.svg)
 
-Four questions, and every one has a working default you can accept with Enter:
+The project path is the only thing it needs from you. Everything else has a
+working default you can accept with Enter:
 
 | It asks | It means | Default |
 | --- | --- | --- |
 | **project path** | A repo to review. Enter as many as you like; blank line to finish. | — |
+| **name** | What to call it in the digest. | the directory's name |
 | **tasks** | Which reviews to run on it. | `code_review, security_audit, deps_audit` |
 | **windows** | Hours it's allowed to run, local time. | `00:00-06:00` |
 | **idle minutes** | How long you must be away from Claude Code first. | `60` |
+| **digest dir** | Where the morning digest lands. | `~/nightshift-reports` |
 
 Everything it writes goes to `~/.nightshift/config.yaml`. Edit it by hand
 whenever you like — it's plain YAML, and `nightshift status` validates it.
@@ -96,9 +99,14 @@ If you let `init` install the cron lines, you're already done. Cron calls
 exits quietly when the answer is no:
 
 ```
-0 * * * *   nightshift run     # gated: window → idle → budget → lock
-30 7 * * *  nightshift digest  # render yesterday's findings
+0 * * * * ~/.local/bin/nightshift run    >> /tmp/nightshift-cron.log 2>&1
+30 7 * * * ~/.local/bin/nightshift digest >> /tmp/nightshift-cron.log 2>&1
 ```
+
+The hourly line is the gated one; the 07:30 line renders yesterday's findings.
+`init` writes the absolute path to the binary because cron runs with a minimal
+`PATH` that almost certainly doesn't include yours, and redirects both streams
+to a log because there is nowhere else for cron's output to go.
 
 A run happens only when **all four gates** open:
 
@@ -303,7 +311,7 @@ You've been using Claude Code, so nightshift is staying out of your way. Use
 **`nothing to do — claude_code: daily budget spent (6/6 today)`**
 Out of quota for today. Raise `max_runs_per_day` if you want more.
 
-**`No usable AI CLI found`**
+**``No usable AI CLI found. Install Claude Code and re-run `nightshift init`.``**
 `claude` isn't on your `PATH`. Check `claude --version` in the same shell.
 
 **Cron never runs it.** Cron uses a minimal `PATH`, which is why `init` writes
@@ -319,9 +327,18 @@ recorded as `timeout`. There is nothing to clean up by hand.
 nightshift keeps no state anywhere else, so removing it is three lines:
 
 ```bash
-crontab -e                    # delete the block marked "# nightshift (managed…)"
+crontab -e                    # delete the block (see below)
 rm -rf ~/.nightshift          # config, ledger, queue, event logs
 pipx uninstall nightshift-cli
+```
+
+`init` fences its crontab lines between two markers — delete them and
+everything between:
+
+```
+# nightshift (managed — edit via `nightshift init`)
+...
+# end nightshift
 ```
 
 Your digests in `~/nightshift-reports` are yours — delete them or don't.

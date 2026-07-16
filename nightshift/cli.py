@@ -557,7 +557,17 @@ def status() -> None:
     queue = Queue()
     upcoming = queue.peek(cfg.pairs())
     if upcoming:
-        click.echo(f"up next   {upcoming[0]} · {upcoming[1]}")
+        line = f"up next   {upcoming[0]} · {upcoming[1]}"
+        pinned = next(
+            (p.provider for p in cfg.projects if p.name == upcoming[0] and p.provider),
+            None,
+        )
+        # Only shown for a pin, which is a fact from the config. Naming a
+        # provider for an unpinned project would be a guess about who happens to
+        # be idle and under budget by the time the window comes round.
+        if pinned:
+            line += f" · {pinned}"
+        click.echo(line)
     click.echo()
 
     recent = report.load_results(cfg, now.date())

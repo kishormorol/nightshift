@@ -256,6 +256,12 @@ projects:
   - name: gradagent
     path: ~/projects/gradagent
     tasks: [code_review, deps_audit, docs_drift]
+  - name: nightshift
+    path: ~/projects/nightshift
+    tasks: [code_review]
+    # Optional. Pin this project to one provider. Without it, whichever enabled
+    # provider is idle and under budget takes the project.
+    provider: codex
 
 schedule:
   windows: ["09:00-18:00", "00:00-06:00"]   # local time; may cross midnight

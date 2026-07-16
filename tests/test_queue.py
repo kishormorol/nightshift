@@ -33,6 +33,36 @@ def test_peek_does_not_advance(tmp_path):
     assert q.pop(PAIRS) == ("a", "code_review")
 
 
+def test_rotation_starts_where_peek_points_and_lists_everything_once(tmp_path):
+    q = Queue(tmp_path / "q.json")
+    assert q.rotation(PAIRS) == PAIRS
+    q.pop(PAIRS)  # served ("a", "code_review"); next is ("a", "deps_audit")
+    assert q.rotation(PAIRS) == [
+        ("a", "deps_audit"),
+        ("b", "docs_drift"),
+        ("a", "code_review"),  # wrapped, still present exactly once
+    ]
+
+
+def test_rotation_of_nothing_is_empty(tmp_path):
+    assert Queue(tmp_path / "q.json").rotation([]) == []
+
+
+def test_take_can_serve_a_pair_out_of_turn(tmp_path):
+    # What the scheduler does when the pair whose turn it is can't run: serve a
+    # later one and record that, rather than hold the rotation still.
+    q = Queue(tmp_path / "q.json")
+    q.take(("b", "docs_drift"))
+    assert q.last == ("b", "docs_drift")
+    assert q.peek(PAIRS) == ("a", "code_review")  # rotation resumes after it
+
+
+def test_take_survives_a_new_process(tmp_path):
+    path = tmp_path / "q.json"
+    Queue(path).take(("a", "deps_audit"))
+    assert Queue(path).last == ("a", "deps_audit")
+
+
 def test_empty_pairs_yields_nothing(tmp_path):
     q = Queue(tmp_path / "q.json")
     assert q.pop([]) is None

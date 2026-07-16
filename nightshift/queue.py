@@ -51,6 +51,18 @@ class Queue:
             return pairs[0]
         return pairs[(pairs.index(self._last) + 1) % len(pairs)]
 
+    def take(self, pair: Pair) -> None:
+        """Record ``pair`` as served, wherever it sits in the rotation.
+
+        For when the pair the rotation offered could not run — a project pinned
+        to a provider that is out of budget — and a later one was served in its
+        place. The passed-over pair is not held back for next time; it simply
+        comes round again. Holding it would let one unavailable provider wedge
+        the rotation, which is the same starvation :meth:`pop` refuses.
+        """
+        self._last = pair
+        write_json(self.path, {"last": list(pair)})
+
     def pop(self, pairs: list[Pair]) -> Pair | None:
         """Take the next pair and persist the new position.
 
@@ -60,9 +72,20 @@ class Queue:
         pair = self.peek(pairs)
         if pair is None:
             return None
-        self._last = pair
-        write_json(self.path, {"last": list(pair)})
+        self.take(pair)
         return pair
+
+    def rotation(self, pairs: list[Pair]) -> list[Pair]:
+        """``pairs`` reordered to start where :meth:`peek` points.
+
+        Every pair, exactly once, in the order the rotation would offer them —
+        so a caller can walk forward looking for one it is able to run.
+        """
+        start = self.peek(pairs)
+        if start is None:
+            return []
+        i = pairs.index(start)
+        return pairs[i:] + pairs[:i]
 
     def reset(self) -> None:
         self._last = None

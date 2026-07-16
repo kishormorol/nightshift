@@ -69,6 +69,11 @@ class Project:
     name: str
     path: Path
     tasks: tuple[str, ...]
+    #: Pin this project to one provider. ``None`` means "whichever enabled
+    #: provider can run right now". A pin is hard: if the named provider is out
+    #: of budget, still in use, or not installed, the project waits rather than
+    #: being reviewed by someone else.
+    provider: str | None = None
 
 
 @dataclass(frozen=True)
@@ -265,11 +270,11 @@ def _parse_projects(raw: Any) -> tuple[Project, ...]:
     for i, entry in enumerate(raw):
         where = f"projects[{i}]"
         data = _require_mapping(entry, where)
-        unknown = set(data) - {"name", "path", "tasks"}
+        unknown = set(data) - {"name", "path", "tasks", "provider"}
         if unknown:
             raise ConfigError(
                 f"{where}: unknown field(s) {sorted(unknown)} — "
-                f"expected name, path, tasks"
+                f"expected name, path, tasks, provider"
             )
 
         name = data.get("name")
@@ -307,8 +312,26 @@ def _parse_projects(raw: Any) -> tuple[Project, ...]:
             if task not in tasks:
                 tasks.append(task)
 
+        pinned = data.get("provider")
+        if pinned is not None:
+            if not isinstance(pinned, str) or not pinned.strip():
+                raise ConfigError(
+                    f"{where}.provider: expected a provider name, got {pinned!r}"
+                )
+            pinned = pinned.strip()
+            if pinned not in KNOWN_PROVIDERS:
+                raise ConfigError(
+                    f"{where}.provider: unknown provider {pinned!r} — known "
+                    f"providers are {', '.join(KNOWN_PROVIDERS)}"
+                )
+
         projects.append(
-            Project(name=name, path=expand(raw_path), tasks=tuple(tasks))
+            Project(
+                name=name,
+                path=expand(raw_path),
+                tasks=tuple(tasks),
+                provider=pinned,
+            )
         )
     return tuple(projects)
 
@@ -357,6 +380,22 @@ def parse(data: Any, source: Path | None = None) -> Config:
             "      enabled: true"
         )
 
+    projects = _parse_projects(root.get("projects"))
+    # Cross-field, so it can't live in _parse_projects: a pin at a disabled
+    # provider is a contradiction inside one file — the project could never run,
+    # on any machine, at any hour. Refused here for the same reason the check
+    # above refuses a config with every provider disabled. Contrast
+    # `providers.*.binary`, which is left to the adapter precisely because
+    # whether a path exists depends on the machine rather than the file.
+    for project in projects:
+        if project.provider and not providers[project.provider].enabled:
+            raise ConfigError(
+                f"project {project.name!r} is pinned to provider "
+                f"{project.provider!r}, which is disabled — so it could never be "
+                f"reviewed. Either set providers.{project.provider}.enabled: true, "
+                f"or drop the `provider:` line to let any enabled provider take it."
+            )
+
     digest = _require_mapping(root.get("digest"), "digest")
     unknown_digest = set(digest) - {"dir"}
     if unknown_digest:
@@ -379,7 +418,7 @@ def parse(data: Any, source: Path | None = None) -> Config:
 
     return Config(
         providers=providers,
-        projects=_parse_projects(root.get("projects")),
+        projects=projects,
         schedule=_parse_schedule(root.get("schedule")),
         digest_dir=expand(digest_dir),
         timeout_s=timeout_s,

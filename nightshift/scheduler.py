@@ -97,14 +97,18 @@ def _record_skip(cfg: Config, provider: str, detail: str, now: datetime) -> RunR
 
 
 @dataclass
-class ProviderChoice:
-    provider: Provider | None
-    adapter: Adapter | None
-    reason: str = ""
+class Usable:
+    """Which providers could run something right now, and why the rest can't."""
+
+    by_name: dict[str, tuple[Provider, Adapter]] = field(default_factory=dict)
+    reasons: list[str] = field(default_factory=list)
     skips: list[RunResult] = field(default_factory=list)
 
+    def __bool__(self) -> bool:
+        return bool(self.by_name)
 
-def choose_provider(
+
+def usable_providers(
     cfg: Config,
     ledger: Ledger,
     now: datetime,
@@ -112,8 +116,12 @@ def choose_provider(
     force: bool = False,
     only: str | None = None,
     get_adapter=None,
-) -> ProviderChoice:
-    """First enabled provider that is installed, idle, and under budget.
+) -> Usable:
+    """Every enabled provider that is installed, idle, and under budget.
+
+    Evaluated once per run and for all providers, because a project may pin any
+    one of them — and because ``availability()`` shells out to ``--version``,
+    which is not something to repeat per project.
 
     ``--now`` (``force``) skips the idle check but never the budget check —
     budget is the promise that nightshift won't eat someone's quota.
@@ -125,42 +133,96 @@ def choose_provider(
     if only:
         enabled = [p for p in enabled if p.name == only]
         if not enabled:
-            return ProviderChoice(None, None, f"provider {only!r} is not enabled")
+            return Usable(reasons=[f"provider {only!r} is not enabled"])
 
-    skips: list[RunResult] = []
-    reasons: list[str] = []
-
+    found = Usable()
     for provider in enabled:
         try:
             adapter = get_adapter(provider.name, provider.binary)
         except Exception as exc:
-            reasons.append(f"{provider.name}: {exc}")
+            found.reasons.append(f"{provider.name}: {exc}")
             continue
 
         availability = adapter.availability()
         if not availability.ok:
-            reasons.append(f"{provider.name}: {availability.reason}")
+            found.reasons.append(f"{provider.name}: {availability.reason}")
             continue
 
         if not force:
             idle, why = is_idle(adapter, cfg.schedule.idle_minutes, now)
             if not idle:
-                reasons.append(why)
+                found.reasons.append(why)
                 continue
 
         usage = ledger.usage(provider.name, provider.budget, now)
         if usage.exhausted:
             detail = f"budget · {usage.reason()}"
-            reasons.append(f"{provider.name}: {usage.reason()}")
+            found.reasons.append(f"{provider.name}: {usage.reason()}")
             if not _already_logged_budget_skip(cfg, provider.name, now.date()):
-                skips.append(_record_skip(cfg, provider.name, detail, now))
+                found.skips.append(_record_skip(cfg, provider.name, detail, now))
             continue
 
-        return ProviderChoice(provider, adapter, skips=skips)
+        found.by_name[provider.name] = (provider, adapter)
 
-    return ProviderChoice(
-        None, None, "; ".join(reasons) or "no providers enabled", skips=skips
-    )
+    if not found.by_name and not found.reasons:
+        found.reasons.append("no providers enabled")
+    return found
+
+
+@dataclass
+class WorkChoice:
+    """The pair to run and who will run it."""
+
+    provider: Provider | None = None
+    adapter: Adapter | None = None
+    pair: tuple[str, str] | None = None
+    reason: str = ""
+
+
+def choose_work(cfg: Config, queue: Queue, usable: Usable) -> WorkChoice:
+    """The first pair in rotation order whose provider can run it.
+
+    A project's ``provider:`` pin is hard — it is never handed to a different
+    provider. But an unrunnable pin skips that project's *turn*, not the whole
+    run: one project pinned to an exhausted provider must not stop every other
+    project being reviewed, which is the starvation ``Queue.pop`` already
+    refuses on the failure path.
+    """
+    pairs = cfg.pairs()
+    if not pairs:
+        return WorkChoice(reason="no (project, task) pairs configured")
+
+    reasons: list[str] = []
+    for pair in queue.rotation(pairs):
+        project = _project_by_name(cfg, pair[0])
+        if project is None:  # pragma: no cover - pairs() derives from cfg
+            continue
+
+        if project.provider:
+            entry = usable.by_name.get(project.provider)
+            if entry is None:
+                reasons.append(
+                    f"{project.name}: pinned to {project.provider}, which is unavailable"
+                )
+                continue
+        else:
+            entry = _first_usable(cfg, usable)
+            if entry is None:
+                break  # nothing is usable; no later unpinned pair will fare better
+
+        provider, adapter = entry
+        return WorkChoice(provider=provider, adapter=adapter, pair=pair)
+
+    return WorkChoice(reason="; ".join(reasons + usable.reasons))
+
+
+def _first_usable(cfg: Config, usable: Usable) -> tuple[Provider, Adapter] | None:
+    """The usable provider that comes first in config order."""
+    for provider in cfg.enabled_providers():
+        entry = usable.by_name.get(provider.name)
+        if entry is not None:
+            return entry
+    return None
 
 
 def _tee(*sinks: OnEvent | None) -> OnEvent:
@@ -250,12 +312,13 @@ def run_once(
         windows = ", ".join(w.raw for w in cfg.schedule.windows)
         return Outcome(False, f"outside configured windows ({windows})")
 
-    # 2 + 3. Idle and budget.
-    choice = choose_provider(
+    # 2 + 3. Idle and budget, for every provider — a project may pin any of them.
+    usable = usable_providers(
         cfg, ledger, now, force=force, only=provider, get_adapter=get_adapter
     )
-    if choice.provider is None or choice.adapter is None:
-        return Outcome(False, choice.reason, results=choice.skips)
+    if not usable:
+        # Nothing can run, so don't take the lock or disturb the rotation.
+        return Outcome(False, "; ".join(usable.reasons), results=usable.skips)
 
     # 4. Lock.
     events.prune()
@@ -265,16 +328,20 @@ def run_once(
     try:
         lock.acquire()
     except LockBusy as exc:
-        return Outcome(False, str(exc), results=choice.skips)
+        return Outcome(False, str(exc), results=usable.skips)
 
-    results = list(choice.skips)
+    results = list(usable.skips)
     try:
-        pair = queue.pop(cfg.pairs())
-        if pair is None:
-            return Outcome(False, "no (project, task) pairs configured", results=results)
-        project_name, task = pair
+        # 5. Whose turn is it, and can anyone take it?
+        choice = choose_work(cfg, queue, usable)
+        if choice.pair is None or choice.provider is None or choice.adapter is None:
+            return Outcome(False, choice.reason, results=results)
+        # Only now is the position spent: a pair we couldn't run never claimed a
+        # turn, and the one we can run claims its own even if it fails below.
+        queue.take(choice.pair)
+        project_name, task = choice.pair
         project = _project_by_name(cfg, project_name)
-        if project is None:  # pragma: no cover - pairs() derives from cfg
+        if project is None:  # pragma: no cover - choose_work resolved it already
             return Outcome(False, f"project {project_name!r} vanished from config")
 
         if not project.path.is_dir():

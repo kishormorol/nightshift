@@ -72,7 +72,7 @@ def stub_registry(monkeypatch):
 def test_version(runner):
     result = runner.invoke(main, ["--version"])
     assert result.exit_code == 0
-    assert "0.1.2" in result.output
+    assert "0.2.0" in result.output
 
 
 def test_help_lists_every_command(runner):

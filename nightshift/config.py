@@ -60,7 +60,7 @@ class Provider:
     budget: Budget = field(default_factory=Budget)
     #: Where the CLI lives, when it isn't simply on PATH under its usual name.
     #: ``None`` means "look up the adapter's default name on PATH". Set this for
-    #: an install PATH can't see — Codex bundled inside ChatGPT.app, say.
+    #: an install that PATH can't see — Codex bundled inside ChatGPT.app, say.
     binary: str | None = None
 
 

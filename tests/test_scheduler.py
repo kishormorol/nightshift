@@ -38,7 +38,7 @@ def test_the_configured_binary_reaches_the_adapter(tmp_path, project_dir, get_fa
         tmp_path,
         project_dir,
         providers={
-            "claude_code": {
+            "codex": {
                 "enabled": True,
                 "binary": "/Applications/ChatGPT.app/Contents/Resources/codex",
             }

@@ -7,11 +7,11 @@
 Put your idle Claude Code or Codex subscription to work — read-only reviews of
 your projects while you're busy, one digest every morning.
 
-![A real code_review of this repo: two HIGH findings, then the morning digest](docs/demo.svg)
+![A code_review of this repo: a HIGH and a MED finding, then the morning digest](https://raw.githubusercontent.com/kishormorol/nightaudit/main/docs/demo.svg)
 
 [![PyPI](https://img.shields.io/pypi/v/nightshift-cli)](https://pypi.org/project/nightshift-cli/)
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+[![license](https://img.shields.io/badge/license-MIT-blue)](https://github.com/kishormorol/nightaudit/blob/main/LICENSE)
+[![python](https://img.shields.io/badge/python-3.10%2B-blue)](https://github.com/kishormorol/nightaudit/blob/main/pyproject.toml)
 
 **[Docs](https://nightshift-site-production.up.railway.app/docs)** · [Quick Start](https://nightshift-site-production.up.railway.app/docs/quick-start) · [Configuration](https://nightshift-site-production.up.railway.app/docs/configuration) · [CLI Reference](https://nightshift-site-production.up.railway.app/docs/cli-reference)
 
@@ -106,7 +106,7 @@ covered against a `FakeAdapter`, and the Claude Code adapter is tested with a
 mocked `subprocess`. No test ever shells out to a real AI CLI.
 
 The images on this page are generated from real captured output — see
-[docs/RECORDING.md](docs/RECORDING.md) if you change what the CLI prints.
+[docs/RECORDING.md](https://github.com/kishormorol/nightaudit/blob/main/docs/RECORDING.md) if you change what the CLI prints.
 
 ## License
 

@@ -54,14 +54,26 @@ the same change.
 
 ## 3. Record a real asciinema cast
 
-`docs/demo.svg` is generated (`docs/make-demo.py`), not recorded. Its transcript
-is real CLI formatting, but the findings come from a stub provider. A real cast
+`docs/demo.svg` is generated (`docs/make-demo.py`), not recorded. A real cast
 demonstrates the timings instead of asserting them. See `docs/RECORDING.md` —
 it also says to repoint `README.md` and delete the generator when you do.
 
 No longer blocked. It waited on the output format being settled, and it is —
 `watch` prints the framed log `_render_log_event` emits, and `docs/shots/` holds
 real captures of it.
+
+**It has since gone stale, which raises the priority.** `make-demo.py` says its
+transcript is "real formatting", and it is not: the lines read
+``path · 267 — text`` where `_echo_finding` prints ``path:line · text``. That is
+the same drift the 07-15 `watch.txt` had, still live in the one image at the top
+of the README and of the PyPI page — the first thing anyone sees. It survived
+because that transcript is a hand-typed constant in a .py file, which nothing
+compares to anything.
+
+The fix is the fix that worked everywhere else: generate it from
+`docs/shots/`, the way `make-run-script.py` builds the hero, rather than
+recording a cast and inheriting the same problem in a new format. A cast still
+buys real timings; the format drift does not need to wait for one.
 
 ## 4. Copilot adapter — help wanted, blocked upstream
 

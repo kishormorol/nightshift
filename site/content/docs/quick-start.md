@@ -17,7 +17,7 @@ working default you can accept with Enter:
 
 | It asks | It means | Default |
 | --- | --- | --- |
-| **project path** | A repo to review. Enter as many as you like; blank line to finish. | — |
+| **project path** | A repo to review. Enter as many as you like; blank line to finish. Or type `scan <folder>` to find every git repo under a folder and add them from a checklist. | — |
 | **name** | What to call it in the digest. | the directory's name |
 | **tasks** | Which reviews to run on it. | `code_review, security_audit, deps_audit` |
 | **windows** | Hours it's allowed to run, local time. | `00:00-06:00` |

@@ -19,7 +19,7 @@ import click
 
 from nightaudit import __version__
 from nightaudit import adapters as adapter_registry
-from nightaudit import cron, events, prompts, report, scheduler
+from nightaudit import cron, discover, events, prompts, report, scheduler
 from nightaudit.adapters.base import Event
 from nightaudit.budget import Ledger
 from nightaudit.config import (
@@ -230,9 +230,44 @@ def _render_config(
     return "\n".join(lines)
 
 
+def _add_discovered(
+    root: Path,
+    projects: list[tuple[str, Path, list[str]]],
+    default_tasks: list[str],
+) -> None:
+    """Scan ``root``, offer each git repo, append the ones confirmed.
+
+    A discovered repo takes the folder's name and the default task set — the
+    point of a scan is to skip the typing, and ``config.yaml`` is one edit away
+    if you want something else. Every repo is still its own yes/no: a scan
+    proposes, it does not register. That is the allowlist rule surviving the
+    convenience, not an exception to it.
+    """
+    repos = discover.find_git_repos(root)
+    fresh = [r for r in repos if all(existing != r for _, existing, _ in projects)]
+    if not fresh:
+        click.echo(f"    no new git repos under {root}")
+        return
+    click.echo(f"    {len(fresh)} repo(s) under {root}:")
+    for repo in fresh:
+        if any(name == repo.name for name, _, _ in projects):
+            click.echo(f"      ✗ {repo.name!r} is already registered — skipped {repo}")
+            continue
+        if click.confirm(f"      add {repo}?", default=True):
+            projects.append((repo.name, repo, list(default_tasks)))
+            click.echo(f"        ✓ {repo.name} · {', '.join(default_tasks)}")
+
+
 @main.command()
 @click.option("--force", is_flag=True, help="Overwrite an existing config.")
-def init(force: bool) -> None:
+@click.option(
+    "--discover",
+    "discover_roots",
+    multiple=True,
+    metavar="DIR",
+    help="Scan DIR for git repos and offer each one before the prompts. Repeatable.",
+)
+def init(force: bool, discover_roots: tuple[str, ...]) -> None:
     """Detect your AI CLIs, register projects, and set the schedule."""
     path = config_path()
     if path.exists() and not force:
@@ -258,15 +293,35 @@ def init(force: bool) -> None:
             "`nightaudit init`."
         )
 
+    available = prompts.available_tasks()
+    default_tasks = [t for t in DEFAULT_TASKS if t in available] or available[:1]
+
     click.echo("Which projects should nightaudit review?")
-    click.echo("Enter a path per line; press Enter on a blank line when done.\n")
+    click.echo(
+        "Type a path to add one, or 'scan <folder>' to find git repos under a "
+        "folder.\nPress Enter on a blank line when done.\n"
+    )
     projects: list[tuple[str, Path, list[str]]] = []
+
+    for root in discover_roots:
+        _add_discovered(expand(root), projects, default_tasks)
+    if discover_roots:
+        click.echo()
+
     while True:
         raw = click.prompt(
             "  project path", default="", show_default=False, type=str
         ).strip()
         if not raw:
             break
+        if raw == "scan" or raw.startswith("scan "):
+            target = raw[len("scan"):].strip()
+            if not target:
+                target = click.prompt("    folder to scan", type=str).strip()
+            if target:
+                _add_discovered(expand(target), projects, default_tasks)
+                click.echo()
+            continue
         resolved = expand(raw)
         if not resolved.is_dir():
             click.echo(f"    ✗ {resolved} is not a directory — skipped")
@@ -275,8 +330,6 @@ def init(force: bool) -> None:
         if any(p[0] == name for p in projects):
             click.echo(f"    ✗ {name!r} is already registered — skipped")
             continue
-        available = prompts.available_tasks()
-        default_tasks = [t for t in DEFAULT_TASKS if t in available] or available[:1]
         click.echo(f"    available tasks: {', '.join(available)}")
         chosen = click.prompt(
             "    tasks", default=", ".join(default_tasks), type=str

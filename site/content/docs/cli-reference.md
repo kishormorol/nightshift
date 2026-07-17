@@ -6,7 +6,7 @@ order: 10
 
 | command | what it does |
 | --- | --- |
-| `nightaudit init` | Detect CLIs, register projects, write config, offer to install cron |
+| `nightaudit init [--discover DIR]` | Detect CLIs, register projects, write config, offer to install cron. `--discover` scans DIR for git repos and offers each one |
 | `nightaudit run [--now]` | One gated run. `--now` skips window+idle checks |
 | `nightaudit watch [-n N]` | Follow runs live, including ones cron started |
 | `nightaudit digest [--date]` | Render `DIGEST-YYYY-MM-DD.md` |

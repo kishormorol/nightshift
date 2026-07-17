@@ -321,3 +321,100 @@ def test_init_declines_to_clobber_an_existing_config(
     assert result.exit_code == 0
     assert "Left it alone" in result.output
     assert (isolated_home / "config.yaml").read_text(encoding="utf-8") == before
+
+
+# ---- init: repo discovery ---------------------------------------------
+
+
+def _repos_under(root, *names):
+    for name in names:
+        (root / name / ".git").mkdir(parents=True)
+
+
+def test_init_discovers_repos_with_the_flag(
+    runner, tmp_path, isolated_home, stub_registry
+):
+    """--discover proposes every repo it finds; a 'y' each registers them all,
+    with the folder name and the default task set — no per-repo typing."""
+    from nightaudit.config import load
+
+    root = tmp_path / "code"
+    _repos_under(root, "alpha", "beta")
+    answers = "\n".join(
+        ["y", "y", "", "00:00-06:00", "60", str(tmp_path / "reports"), "n"]
+    )
+    result = runner.invoke(
+        main, ["init", "--discover", str(root)], input=answers + "\n"
+    )
+    assert result.exit_code == 0, result.output
+
+    cfg = load(isolated_home / "config.yaml")
+    assert sorted(p.name for p in cfg.projects) == ["alpha", "beta"]
+    assert "code_review" in cfg.projects[0].tasks
+
+
+def test_init_discovery_lets_you_decline_a_repo(
+    runner, tmp_path, isolated_home, stub_registry
+):
+    """A scan proposes; the human disposes. 'n' on one leaves it out."""
+    from nightaudit.config import load
+
+    root = tmp_path / "code"
+    _repos_under(root, "alpha", "beta")
+    answers = "\n".join(
+        ["n", "y", "", "00:00-06:00", "60", str(tmp_path / "reports"), "n"]
+    )
+    result = runner.invoke(
+        main, ["init", "--discover", str(root)], input=answers + "\n"
+    )
+    assert result.exit_code == 0, result.output
+
+    cfg = load(isolated_home / "config.yaml")
+    assert [p.name for p in cfg.projects] == ["beta"]
+
+
+def test_init_scan_verb_discovers_repos_interactively(
+    runner, tmp_path, isolated_home, stub_registry
+):
+    """Typing 'scan <folder>' at the project prompt is the flag's equal."""
+    from nightaudit.config import load
+
+    root = tmp_path / "code"
+    _repos_under(root, "solo")
+    answers = "\n".join(
+        [f"scan {root}", "y", "", "00:00-06:00", "60", str(tmp_path / "reports"), "n"]
+    )
+    result = runner.invoke(main, ["init"], input=answers + "\n")
+    assert result.exit_code == 0, result.output
+
+    cfg = load(isolated_home / "config.yaml")
+    assert [p.name for p in cfg.projects] == ["solo"]
+
+
+def test_init_scan_that_finds_nothing_says_so_and_falls_through(
+    runner, tmp_path, project_dir, isolated_home, stub_registry
+):
+    """An empty scan is not a dead end — you can still type a path after it."""
+    from nightaudit.config import load
+
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    answers = "\n".join(
+        [
+            f"scan {empty}",  # finds nothing
+            str(project_dir),  # so add one by hand
+            "acme-api",
+            "code_review",
+            "",
+            "00:00-06:00",
+            "60",
+            str(tmp_path / "reports"),
+            "n",
+        ]
+    )
+    result = runner.invoke(main, ["init"], input=answers + "\n")
+    assert result.exit_code == 0, result.output
+    assert "no new git repos" in result.output
+
+    cfg = load(isolated_home / "config.yaml")
+    assert [p.name for p in cfg.projects] == ["acme-api"]

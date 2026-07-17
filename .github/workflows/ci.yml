@@ -173,6 +173,16 @@ jobs:
           print(f"classifiers match the matrix: {sorted(tested)}")
           PY
 
+      - name: The hero terminal must match its capture
+        # site/lib/run-script.generated.ts is rendered from docs/shots/hero.txt.
+        # Hand-editing it is how the landing page twice advertised output no
+        # command has ever printed — the invented `[09:14] → project · task`,
+        # once in the hero and once in the og:image. The captures are the only
+        # writable source; this makes that true rather than merely asked for.
+        run: |
+          python3 docs/make-run-script.py
+          git diff --exit-code site/lib/run-script.generated.ts
+
       - name: The README demo must match its generator
         # docs/demo.svg is generated and committed. Editing make-demo.py without
         # re-running it would leave the README showing stale CLI output.

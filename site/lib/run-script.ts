@@ -1,37 +1,44 @@
 /**
- * The run the hero terminal replays.
+ * How the hero terminal replays a run. The run itself is generated — see
+ * `run-script.generated.ts` and `docs/make-run-script.py`.
  *
- * **The format here is verbatim.** Every glyph, every column, every header and
- * footer is what `nightaudit watch` actually prints — checked against real
- * captured output, not remembered:
+ * This file used to hold the script by hand, and said of it: *the projects and
+ * findings are illustrative — real captured output reviews nightaudit's own
+ * internals, true but unreadable to someone meeting the tool for the first
+ * time.* That was a considered trade, disclosed where it was made, and it is
+ * the reason `gradagent` and a JWT bug lived here for months.
  *
- *   ┌ project · task   provider · HH:MM:SS   run began   (cli.py `_render_log_event`)
- *     ⏺ Tool(input)                          a tool call (cli.py `_render_event`)
- *       ⎿  one-line result                   what it returned
- *     ✻ thinking                             the agent reasoning
- *     🔴 HIGH  ref · text                    a finding   (report.py `parse_finding_line`)
- *   └ ✓ ok   1m42s · 2 findings              the outcome
+ * It is reversed now, for a reason the trade did not anticipate: the shape was
+ * supposed to be the real part, and twice it was not. The identity board's
+ * invented `[09:14] → project · task` shipped in this hero, was fixed by
+ * teaching the CLI to print a real framed log, and then reappeared in the
+ * og:image under a comment about not lying. A hand-typed file has no way to
+ * tell the difference between a subject that is illustrative on purpose and a
+ * format that is wrong by accident. Generating it removes the question: the
+ * only way to change what the hero shows is to change what the CLI printed.
  *
- * **The projects and findings are illustrative.** Real captured output reviews
- * nightaudit's own internals — true, but unreadable to someone meeting the tool
- * for the first time. So the shape is real and the subject is an example, which
- * is the honest trade for a hero: a visitor should recognise the output when
- * they run it, and picture their own repo in it.
+ * The cost is real and was correctly identified — a visitor now meets findings
+ * about `nightaudit/adapters/claude_code.py` rather than an auth bug they would
+ * recognise. What they get back is that it happened. The README already leans on
+ * this ("those are real bugs"), and so does the og:image; the hero was the last
+ * place telling a different story.
  *
- * Two runs, because that is what a watcher sees over a night — cron ticks, the
- * queue rotates to the next (project, task) pair, and the budget ticks up one
- * per completed run. `used` drives the bar, the same counter the ledger keeps.
+ * `used` drives the budget bar, the same counter the ledger keeps — one per
+ * completed run, ticking on `└`.
  */
 
 export type LineKind =
   | "banner" // what `watch` prints while idle
   | "meta" // ┌ a run began
+  | "start" // ⏺ the project dir, as the adapter opens
   | "tool" // ⏺ a tool call
   | "result" // ⎿ what it returned
   | "thinking" // ✻ reasoning
   | "prose" // narration, capped at two lines in the real renderer
   | "high"
   | "med"
+  | "low"
+  | "elide" // not the CLI: our rule over lines we cut. See make-run-script.py.
   | "end"; // └ the outcome
 
 export interface ScriptLine {
@@ -44,57 +51,7 @@ export interface ScriptLine {
   used: number;
 }
 
-export const RUN_SCRIPT: readonly ScriptLine[] = [
-  {
-    kind: "banner",
-    msg: "nightaudit · watching for runs — ctrl-c to stop",
-    used: 0,
-  },
-
-  // 02:14 — cron ticks, the gate opens, the queue hands over the first pair.
-  {
-    kind: "meta",
-    msg: "┌ gradagent · security_audit",
-    detail: "claude_code · 02:14:03",
-    used: 0,
-  },
-  { kind: "tool", msg: "⏺ Grep", detail: "(pattern: jwt|token|secret)", used: 0 },
-  { kind: "result", msg: "⎿  api/auth.py:142", detail: "(+18 lines)", used: 0 },
-  { kind: "thinking", msg: "✻ thinking", used: 0 },
-  {
-    kind: "prose",
-    msg: "The tokens are signed, but I can't find an expiry claim anywhere.",
-    used: 0,
-  },
-  {
-    kind: "high",
-    msg: "🔴 HIGH  api/auth.py:142",
-    detail: "· JWT tokens never expire; set an exp claim",
-    used: 0,
-  },
-  { kind: "end", msg: "└ ✓ ok", detail: "1m42s · 2 findings", used: 1 },
-
-  // 03:09 — next tick, next pair. Nobody is awake for either of them.
-  {
-    kind: "meta",
-    msg: "┌ payments-web · code_review",
-    detail: "claude_code · 03:09:20",
-    used: 1,
-  },
-  {
-    kind: "tool",
-    msg: "⏺ Read",
-    detail: "(file_path: worker/queue.py)",
-    used: 1,
-  },
-  {
-    kind: "med",
-    msg: "🟠 MED   worker/queue.py:88",
-    detail: "· retry loop has no ceiling",
-    used: 1,
-  },
-  { kind: "end", msg: "└ ✓ ok", detail: "2m20s · 3 findings", used: 2 },
-] as const;
+export { RUN_SCRIPT } from "@/lib/run-script.generated";
 
 export const BUDGET_PER_DAY = 6;
 
@@ -108,26 +65,38 @@ export const HOLD_BEATS = 3;
 export const LINE_INDENT: Record<LineKind, string> = {
   banner: "pl-0",
   meta: "pl-0",
+  start: "pl-2",
   tool: "pl-2",
   result: "pl-6",
   thinking: "pl-2",
   prose: "pl-4",
   high: "pl-2",
   med: "pl-2",
+  low: "pl-2",
+  elide: "pl-0",
   end: "pl-0",
 };
 
 export const LINE_COLOR: Record<LineKind, string> = {
   banner: "var(--color-fg-ghost)",
   meta: "var(--color-fg)",
+  // `start` and `tool` share the ⏺ glyph and differ by colour in the terminal —
+  // green for the project opening, cyan for each call. Same here.
+  start: "var(--color-ok)",
   tool: "var(--color-accent)",
   result: "var(--color-fg-ghost)",
   // The agent thinking in the small hours; the moon is the identity's own
   // second colour and the one moment in a run that earns it.
   thinking: "var(--color-moon)",
   prose: "var(--color-fg-faint)",
+  // Mirrors cli.py's `_SEVERITY_FG`: HIGH red, MED yellow, LOW cyan — and cyan
+  // is what a tool call is too, so `low` and `tool` share a colour here exactly
+  // as they do in the terminal. Not a collision; the same one.
   high: "var(--color-bad)",
   med: "var(--color-warn)",
+  low: "var(--color-accent)",
+  // Chrome, not output — dim enough to read as ours rather than the CLI's.
+  elide: "var(--color-fg-ghost)",
   end: "var(--color-ok)",
 };
 

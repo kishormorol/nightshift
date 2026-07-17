@@ -63,26 +63,41 @@ export function HeroTerminal() {
         {/* The run is a log, and a log read by a screen reader mid-replay is
             noise — announce nothing, and expose the finished transcript below. */}
         <div aria-hidden="true">
-          {lines.map((line, i) => (
-            <div
-              key={i}
-              className={`${LINE_INDENT[line.kind]} py-[2.5px] leading-[1.45] ${
-                line.kind === "meta" && i > 0 ? "mt-2.5" : ""
-              }`}
-            >
-              <span
-                className="break-words"
-                style={{ color: LINE_COLOR[line.kind] }}
+          {lines.map((line, i) =>
+            // The one line here the CLI did not print: a rule standing for the
+            // lines we cut. Drawn as chrome — rules and a centred count — so it
+            // cannot be mistaken for output, the same treatment make-shots.py
+            // gives it in the README stills.
+            line.kind === "elide" ? (
+              <div
+                key={i}
+                className="flex items-center gap-3 py-[2.5px] leading-[1.45]"
               >
-                {line.msg}
-              </span>
-              {line.detail ? (
-                <span className="ml-1.5 break-words text-fg-ghost">
-                  {line.detail}
+                <span className="h-px flex-1 bg-line-700" />
+                <span className="text-[10.5px] text-fg-ghost">{line.msg}</span>
+                <span className="h-px flex-1 bg-line-700" />
+              </div>
+            ) : (
+              <div
+                key={i}
+                className={`${LINE_INDENT[line.kind]} py-[2.5px] leading-[1.45] ${
+                  line.kind === "meta" && i > 0 ? "mt-2.5" : ""
+                }`}
+              >
+                <span
+                  className="break-words"
+                  style={{ color: LINE_COLOR[line.kind] }}
+                >
+                  {line.msg}
                 </span>
-              ) : null}
-            </div>
-          ))}
+                {line.detail ? (
+                  <span className="ml-1.5 break-words text-fg-ghost">
+                    {line.detail}
+                  </span>
+                ) : null}
+              </div>
+            ),
+          )}
           <div className="py-[2.5px]">
             <span className="inline-block h-4 w-[9px] animate-blink bg-accent align-text-bottom" />
           </div>
@@ -91,13 +106,22 @@ export function HeroTerminal() {
         <BudgetBar used={used} />
       </div>
 
+      {/* The transcript, for anyone the animation cannot reach. It describes
+          the same run the terminal replays and must be rewritten when the
+          capture changes — it once narrated a JWT bug in a project called
+          gradagent, months after neither was on screen, because nothing here
+          connects the two. `test_the_hero_transcript_matches_the_run` is that
+          connection. Prose rather than a line dump: a screen reader reading 14
+          rows of glyphs and column padding conveys nothing. */}
       <p className="sr-only">
-        A recorded nightaudit watch session. At 02:14 it audits gradagent for
-        security issues and reports a high-severity finding at api/auth.py line
-        142, where JWT tokens never expire. At 03:09 it reviews payments-web and
-        reports a medium-severity finding at worker/queue.py line 88, a retry
-        loop with no ceiling. Both runs finish while nobody is watching, and
-        together they spend 2 of the 6 runs allowed per day.
+        A recorded nightaudit watch session. At 15:23 it reviews the nightaudit
+        repository itself with Claude Code, reading the project files and
+        reasoning aloud as it goes. It reports seven findings, most severe
+        first: a high-severity one in nightaudit/adapters/claude_code.py at line
+        267, about replacing a buffered subprocess call; a medium-severity one
+        in nightaudit/lock.py at line 121; and a low-severity one in
+        nightaudit/cron.py at line 27. The run finishes in 2 minutes 18 seconds
+        while nobody is watching, spending 1 of the 6 runs allowed per day.
       </p>
     </div>
   );

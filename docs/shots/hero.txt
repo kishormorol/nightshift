@@ -1,0 +1,15 @@
+[2mnightaudit · watching for runs — ctrl-c to stop[0m
+
+[34m┌ [0m[1mnightaudit · code_review[0m[2m   claude_code · 15:23:27[0m
+[32m  ⏺ [0m[2m~/projects/nightaudit[0m
+[2m    I'll start by exploring the repository structure to understand what I'm reviewing.[0m
+[36m  ⏺ [0m[1mGlob[0m[2m(pattern: **/*)[0m
+[2m    ⎿  .git/info/exclude (+100 lines)[0m
+[35m[2m  ✻ thinking[0m
+[2m    The repo is a Python CLI called `nightaudit`. Let me read the source files, skipping[0m
+[2m    the vendored `.venv`.[0m
+{{elide 54}}
+  🔴 HIGH [31mnightaudit/adapters/claude_code.py · 267 — Replace the buffered `subprocess.…[0m
+  🟠 MED  [33mnightaudit/lock.py · 121 — Have `release()` re-read the lockfile and unlink …[0m
+  🟡 LOW  [36mnightaudit/cron.py · 27 — Shell-quote the interpreter path (`shlex.quote`) i…[0m
+[34m└ [0m[32m[1m✓ ok[0m[2m   2m18s · 7 findings[0m

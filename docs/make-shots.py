@@ -202,14 +202,24 @@ SHOTS = {
 
 def main() -> None:
     here = Path(__file__).parent
-    out_dir = here / "img"
-    out_dir.mkdir(exist_ok=True)
+    # Two destinations, one render. The README reads `docs/img/`; the docs site
+    # serves `site/public/img/` because Railway builds that service with `site/`
+    # as its root, so nothing above it exists at build time.
+    #
+    # Both are generated and both are diffed by CI, which is the only reason two
+    # copies are allowed to exist: neither is typed, and neither can drift from
+    # the captures without the build going red. Copying one to the other by hand
+    # would be the same bytes and a worse rule.
+    out_dirs = [here / "img", here.parent / "site" / "public" / "img"]
+    for out_dir in out_dirs:
+        out_dir.mkdir(parents=True, exist_ok=True)
     for name, title in SHOTS.items():
         src = here / "shots" / f"{name}.txt"
         svg = render(name, src.read_text(encoding="utf-8"), title)
-        dest = out_dir / f"{name}.svg"
-        dest.write_text(svg, encoding="utf-8")
-        print(f"wrote {dest.relative_to(here.parent)} ({dest.stat().st_size} bytes)")
+        for out_dir in out_dirs:
+            dest = out_dir / f"{name}.svg"
+            dest.write_text(svg, encoding="utf-8")
+            print(f"wrote {dest.relative_to(here.parent)} ({dest.stat().st_size} bytes)")
 
 
 if __name__ == "__main__":

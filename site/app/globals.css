@@ -139,3 +139,115 @@ body {
     inset -0.28em -0.07em 0 0 var(--color-moon),
     0 0 0.65em -0.1em rgba(255, 215, 154, 0.5);
 }
+
+/* Docs prose. Hand-rolled rather than @tailwindcss/typography: the plugin ships
+   a whole opinionated scale that would then need overriding back to the tokens
+   above, and this page needs eight elements to look right. Every colour here is
+   a token — change it there, not in a component. */
+.prose-docs {
+  color: var(--color-fg-muted);
+  line-height: 1.7;
+}
+.prose-docs > * + * {
+  margin-top: 1.1em;
+}
+.prose-docs h2 {
+  margin-top: 2.4em;
+  margin-bottom: 0.7em;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-fg);
+}
+.prose-docs h3 {
+  margin-top: 1.9em;
+  margin-bottom: 0.5em;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+.prose-docs a {
+  color: var(--color-accent-soft);
+  text-underline-offset: 4px;
+}
+.prose-docs a:hover {
+  text-decoration: underline;
+}
+.prose-docs strong {
+  color: var(--color-fg);
+  font-weight: 600;
+}
+.prose-docs ul,
+.prose-docs ol {
+  padding-left: 1.3em;
+}
+.prose-docs ul {
+  list-style: disc;
+}
+.prose-docs ol {
+  list-style: decimal;
+}
+.prose-docs li + li {
+  margin-top: 0.4em;
+}
+.prose-docs li::marker {
+  color: var(--color-fg-ghost);
+}
+/* Inline code, and code inside a block, want opposite treatments: the first is
+   a chip in a sentence, the second is already in a panel. */
+.prose-docs :not(pre) > code {
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  background: var(--color-navy-500);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  color: var(--color-fg);
+}
+.prose-docs pre {
+  overflow-x: auto;
+  padding: 0.95em 1.1em;
+  border: 1px solid var(--color-line-700);
+  border-radius: 10px;
+  background: var(--color-navy-900);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+.prose-docs pre code {
+  font-family: var(--font-mono);
+  color: var(--color-fg-muted);
+}
+.prose-docs blockquote {
+  padding-left: 1em;
+  border-left: 2px solid var(--color-line-600);
+  color: var(--color-fg-faint);
+}
+/* Wide tables scroll inside themselves rather than the page. The config table
+   is six columns of YAML on a phone. */
+.prose-docs table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.prose-docs th,
+.prose-docs td {
+  padding: 0.5em 0.9em;
+  border: 1px solid var(--color-line-800);
+  text-align: left;
+  vertical-align: top;
+}
+.prose-docs th {
+  background: var(--color-navy-700);
+  color: var(--color-fg);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.prose-docs img {
+  max-width: 100%;
+  border-radius: 10px;
+}
+.prose-docs hr {
+  border: 0;
+  border-top: 1px solid var(--color-line-800);
+}

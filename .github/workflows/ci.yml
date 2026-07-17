@@ -190,10 +190,16 @@ jobs:
           python3 docs/make-demo.py
           git diff --exit-code docs/demo.svg
 
-      - name: The README screenshots must match their generator
-        # Same rule for docs/img/*.svg, rendered from the captures in
-        # docs/shots/. Touching either without re-rendering leaves the README
-        # showing a terminal the CLI no longer produces.
+      - name: The screenshots must match their generator
+        # Same rule for the shots rendered from docs/shots/. Touching either
+        # without re-rendering leaves the README showing a terminal the CLI no
+        # longer produces.
+        #
+        # Two output directories: docs/img for the README, site/public/img for
+        # the docs site, which cannot read `../docs` because Railway builds it
+        # with site/ as its root. Both are generated from the same captures and
+        # both are checked here — that is what makes two copies of a byte-
+        # identical SVG a build artifact rather than a thing to keep in step.
         #
         # Safe to pin to one Python: make-shots.py lays out by character cell
         # via unicodedata, and every character the captures use has held the
@@ -201,8 +207,8 @@ jobs:
         # on 3.10, 3.12, and 3.14.
         run: |
           python3 docs/make-shots.py
-          git diff --exit-code docs/img
-          test -z "$(git status --porcelain docs/img)"
+          git diff --exit-code docs/img site/public/img
+          test -z "$(git status --porcelain docs/img site/public/img)"
 
   site:
     runs-on: ubuntu-latest

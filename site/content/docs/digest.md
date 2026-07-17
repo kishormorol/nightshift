@@ -10,7 +10,7 @@ Every run appends to `~/nightaudit-reports/YYYY-MM-DD/`. Once a day
 ```markdown
 # Nightaudit · morning digest
 
-Wed Jul 15, 2026 · generated 17:57 local · 1 project · 1 run
+Wed Jul 15, 2026 · generated 17:57 local · 1 project · 1 run · 48.2k tokens
 
 ## Budget remaining
 
@@ -24,6 +24,13 @@ Wed Jul 15, 2026 · generated 17:57 local · 1 project · 1 run
 - 🟠 Have `release()` re-read the lockfile and unlink only when the recorded pid is
   still our own … — _nightaudit · code_review_ · `nightaudit/lock.py:121`
 
+## Tokens
+
+How many tokens each project's reviews took today.
+
+- nightaudit — 48.2k
+- **total — 48.2k**
+
 ## Run log
 
 | project | task | provider | status | dur | time |
@@ -31,7 +38,11 @@ Wed Jul 15, 2026 · generated 17:57 local · 1 project · 1 run
 | nightaudit | code_review | claude_code | ok | 2m18s | 15:23 |
 ```
 
-Highest severity first, grouped by project, read in twenty seconds.
+Highest severity first, grouped by project, read in twenty seconds. The
+per-run token count also shows on the line `nightaudit run` prints and in
+`nightaudit watch`. It is a measure, not a bill — nightaudit budgets in runs,
+not tokens — and Claude's figure includes cache reads, so it runs larger than a
+plain input-plus-output count. A run whose CLI reports no usage simply omits it.
 **[Here is that digest in full](https://github.com/kishormorol/nightaudit/blob/main/docs/sample-digest.md)** — a real one, not a
 mock-up.
 

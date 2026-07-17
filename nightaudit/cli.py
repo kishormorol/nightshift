@@ -443,11 +443,14 @@ def run(force: bool, provider: str | None, stream: bool | None, verbose: bool) -
         click.echo(line)
         if result.status == "ok":
             findings = report.parse_findings(result)
-            click.echo(
-                f"         {len(findings)} finding{'s' if len(findings) != 1 else ''}"
+            tail = (
+                f"{len(findings)} finding{'s' if len(findings) != 1 else ''}"
                 if findings
-                else "         no findings"
+                else "no findings"
             )
+            if result.tokens > 0:
+                tail += f" · {report.format_tokens(result.tokens)} tokens"
+            click.echo(f"         {tail}")
 
 
 # --------------------------------------------------------------- watch
@@ -482,6 +485,9 @@ def _render_log_event(payload: dict) -> None:
         mark = {"ok": "✓", "failed": "✗", "timeout": "⧗"}.get(status, "·")
         findings = payload.get("findings", 0)
         tail = f"{findings} finding{'' if findings == 1 else 's'}"
+        tokens = payload.get("tokens", 0)
+        if tokens:
+            tail += f" · {report.format_tokens(int(tokens))} tokens"
         if payload.get("detail"):
             tail += f" · {payload['detail']}"
         click.echo(

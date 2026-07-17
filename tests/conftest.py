@@ -112,6 +112,9 @@ class FakeAdapter:
     unavailable_reason: str = "not installed"
     human_used_at: datetime | None = None
     duration_s: float = 1.0
+    #: Stamped onto every result, like a provider's reported usage. Default 0 is
+    #: "the CLI said nothing", which is what most tests want.
+    tokens: int = 0
     calls: list[dict] = field(default_factory=list)
     #: Stamped onto results. Leave ``None`` for the real clock; set it when a
     #: test asserts which day directory a result lands in, so the assertion
@@ -159,6 +162,7 @@ class FakeAdapter:
             findings_md=findings,
             started_at=self.started_at or datetime.now(),
             duration_s=self.duration_s,
+            tokens=self.tokens,
         )
 
 

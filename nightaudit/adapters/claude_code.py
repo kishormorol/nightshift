@@ -31,6 +31,9 @@ from nightaudit.adapters._process import (
 from nightaudit.adapters._process import (
     summarize as _summarize,
 )
+from nightaudit.adapters._process import (
+    tokens_from_usage,
+)
 from nightaudit.adapters.base import Availability, Event, OnEvent, RunResult
 
 #: Tools Claude Code may use: inspect the repo, nothing else.
@@ -180,7 +183,9 @@ class ClaudeCodeAdapter:
     ) -> RunResult:
         started = datetime.now()
 
-        def finish(status: str, findings_md: str, detail: str = "") -> RunResult:
+        def finish(
+            status: str, findings_md: str, detail: str = "", tokens: int = 0
+        ) -> RunResult:
             return RunResult(
                 provider=self.name,
                 project=project_dir.name,
@@ -190,6 +195,7 @@ class ClaudeCodeAdapter:
                 started_at=started,
                 duration_s=(datetime.now() - started).total_seconds(),
                 detail=detail,
+                tokens=tokens,
             )
 
         if not project_dir.is_dir():
@@ -240,7 +246,7 @@ class ClaudeCodeAdapter:
         if not stdout:
             return finish("failed", "", "no output")
 
-        return finish("ok", self._extract(stdout))
+        return finish("ok", self._extract(stdout), tokens=self._tokens(stdout))
 
     # ---- streaming ----------------------------------------------------
 
@@ -260,7 +266,7 @@ class ClaudeCodeAdapter:
         still takes the whole tree with it rather than leaving orphans holding
         the quota.
         """
-        state = {"result_text": "", "claimed": False}
+        state = {"result_text": "", "claimed": False, "tokens": 0}
         prose: list[str] = []
 
         def on_line(payload: dict) -> None:
@@ -274,6 +280,9 @@ class ClaudeCodeAdapter:
                 value = payload.get("result")
                 if isinstance(value, str):
                     state["result_text"] = value.strip()
+                # The result frame carries the run's usage totals; take them
+                # whether or not it also carried result text.
+                state["tokens"] = tokens_from_usage(payload.get("usage"))
             for event in self._events_for(payload):
                 if event.kind == "text":
                     prose.append(event.text)
@@ -291,17 +300,18 @@ class ClaudeCodeAdapter:
         # Whatever the CLI managed to say before the deadline is still worth
         # keeping — the run was billed either way.
         findings = state["result_text"] or "\n\n".join(prose).strip()
+        tokens = int(state["tokens"])
 
         if outcome.timed_out:
-            return finish("timeout", findings, f"no output after {timeout_s}s")
+            return finish("timeout", findings, f"no output after {timeout_s}s", tokens)
 
         if outcome.returncode != 0:
-            return finish("failed", findings, outcome.stderr_head)
+            return finish("failed", findings, outcome.stderr_head, tokens)
 
         if not findings:
-            return finish("failed", "", "no output")
+            return finish("failed", "", "no output", tokens)
 
-        return finish("ok", findings)
+        return finish("ok", findings, tokens=tokens)
 
     @classmethod
     def _events_for(cls, payload: dict):
@@ -348,6 +358,22 @@ class ClaudeCodeAdapter:
             return
         if isinstance(payload, dict):
             sessions.record(str(payload.get("session_id") or ""))
+
+    @staticmethod
+    def _tokens(stdout: str) -> int:
+        """Total tokens from ``--output-format json``'s single envelope.
+
+        Same forgiveness as :meth:`_extract`: a stdout we cannot parse yields
+        zero rather than raising, because the findings already returned and a
+        missing token count must not undo a completed run.
+        """
+        try:
+            payload = json.loads(stdout)
+        except json.JSONDecodeError:
+            return 0
+        if isinstance(payload, dict):
+            return tokens_from_usage(payload.get("usage"))
+        return 0
 
     @staticmethod
     def _extract(stdout: str) -> str:

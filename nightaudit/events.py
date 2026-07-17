@@ -135,6 +135,7 @@ class EventLog:
                 "duration_s": round(result.duration_s, 3),
                 "detail": result.detail,
                 "findings": findings,
+                "tokens": result.tokens,
             }
         )
         self.close_quietly()

@@ -514,6 +514,58 @@ def test_streaming_findings_match_the_result_event(adapter, popen_spy, project_d
     assert result.findings_md == "- HIGH api/auth.py:142 — no exp"
 
 
+def test_streaming_captures_token_usage_from_the_result_event(
+    adapter, popen_spy, project_dir
+):
+    """The result frame's usage — including cache reads, real tokens — is the
+    run's token total."""
+    popen_spy.box["proc"] = FakePopen(
+        [
+            line(
+                {
+                    "type": "result",
+                    "is_error": False,
+                    "result": "- LOW a.py:1 — x",
+                    "usage": {
+                        "input_tokens": 1000,
+                        "output_tokens": 200,
+                        "cache_read_input_tokens": 5000,
+                    },
+                }
+            )
+        ]
+    )
+    result, _ = collect(adapter, project_dir)
+
+    assert result.status == "ok"
+    assert result.tokens == 6200
+
+
+def test_a_stream_without_usage_reports_zero_tokens(adapter, popen_spy, project_dir):
+    """The default stream carries no usage; that is zero, not a crash."""
+    result, _ = collect(adapter, project_dir)
+
+    assert result.status == "ok"
+    assert result.tokens == 0
+
+
+def test_the_buffered_path_captures_token_usage(adapter, spy, project_dir):
+    spy.box["proc"] = FakeProc(
+        stdout=json.dumps(
+            {
+                "type": "result",
+                "is_error": False,
+                "result": "- LOW a.py:1 — x",
+                "usage": {"input_tokens": 800, "output_tokens": 100},
+            }
+        )
+    )
+    result = adapter.run("review", project_dir, 600)
+
+    assert result.status == "ok"
+    assert result.tokens == 900
+
+
 def test_a_malformed_line_is_skipped_not_fatal(adapter, popen_spy, project_dir):
     popen_spy.box["proc"] = FakePopen(["not json\n", "\n", *STREAM])
     result, seen = collect(adapter, project_dir)

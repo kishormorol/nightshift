@@ -45,6 +45,7 @@ from nightaudit.adapters._process import (
     emit,
     stream_ndjson,
     summarize,
+    tokens_from_usage,
 )
 from nightaudit.adapters.base import Availability, Event, OnEvent, RunResult
 
@@ -96,6 +97,9 @@ class _Collector:
         self.wrote: list[str] = []
         #: A turn- or stream-level error message, preferred over raw stderr.
         self.error = ""
+        #: Tokens across every completed turn. Codex reports per turn, and a
+        #: review can take more than one, so these accumulate.
+        self.tokens = 0
         self._claimed = False
 
     @property
@@ -124,6 +128,9 @@ class _Collector:
                 sessions.record(thread_id)
                 self._claimed = True
             self._emit(Event("start", text=str(self.project_dir)))
+
+        elif kind == "turn.completed":
+            self.tokens += tokens_from_usage(payload.get("usage"))
 
         elif kind == "turn.failed":
             error = payload.get("error")
@@ -319,7 +326,9 @@ class CodexAdapter:
         """
         started = datetime.now()
 
-        def finish(status: str, findings_md: str, detail: str = "") -> RunResult:
+        def finish(
+            status: str, findings_md: str, detail: str = "", tokens: int = 0
+        ) -> RunResult:
             return RunResult(
                 provider=self.name,
                 project=project_dir.name,
@@ -329,6 +338,7 @@ class CodexAdapter:
                 started_at=started,
                 duration_s=(datetime.now() - started).total_seconds(),
                 detail=detail,
+                tokens=tokens,
             )
 
         if not project_dir.is_dir():
@@ -343,6 +353,7 @@ class CodexAdapter:
             return finish("failed", "", f"could not start `{self.binary}`: {exc}")
 
         findings = collector.findings
+        tokens = collector.tokens
 
         if collector.wrote:
             # Before anything else, including the exit code: a run that changed
@@ -354,15 +365,16 @@ class CodexAdapter:
                 findings,
                 f"sandbox breach — codex reported changing {', '.join(collector.wrote)}; "
                 "refusing to treat this run as read-only",
+                tokens,
             )
 
         if outcome.timed_out:
-            return finish("timeout", findings, f"no output after {timeout_s}s")
+            return finish("timeout", findings, f"no output after {timeout_s}s", tokens)
 
         if outcome.returncode != 0:
-            return finish("failed", findings, collector.error or outcome.stderr_head)
+            return finish("failed", findings, collector.error or outcome.stderr_head, tokens)
 
         if not findings:
-            return finish("failed", "", collector.error or "no output")
+            return finish("failed", "", collector.error or "no output", tokens)
 
-        return finish("ok", findings)
+        return finish("ok", findings, tokens=tokens)

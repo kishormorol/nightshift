@@ -11,11 +11,13 @@ from nightaudit.report import (
     budget_bar,
     dedupe,
     format_duration,
+    format_tokens,
     load_results,
     parse_finding_line,
     parse_findings,
     render_digest,
     store_result,
+    tokens_by_project,
     write_digest,
 )
 
@@ -443,3 +445,67 @@ def test_write_digest_puts_the_file_where_the_spec_says(cfg):
     path = write_digest(cfg, ON, ledger=Ledger(cfg.digest_dir.parent / "l.json"))
     assert path == cfg.digest_dir / "DIGEST-2026-07-14.md"
     assert path.read_text(encoding="utf-8").startswith("# Nightaudit")
+
+
+# ---- token usage ------------------------------------------------------
+
+
+def test_format_tokens_is_compact():
+    assert format_tokens(0) == "0"
+    assert format_tokens(482) == "482"
+    assert format_tokens(48200) == "48.2k"
+    assert format_tokens(1_250_000) == "1.2M"
+
+
+def test_tokens_by_project_sums_across_runs_and_drops_zeros():
+    results = [
+        result(project="a", tokens=1000),
+        result(project="a", tokens=500),
+        result(project="b", tokens=2000),
+        result(project="c", tokens=0),  # reported nothing — not a row of zeros
+    ]
+    assert tokens_by_project(results) == {"a": 1500, "b": 2000}
+
+
+def test_tokens_by_project_counts_billed_failures_not_placeholders():
+    results = [
+        result(status="failed", tokens=700),
+        result(project=PLACEHOLDER, tokens=999),  # a skipped slot, not a project
+    ]
+    assert tokens_by_project(results) == {"acme-api": 700}
+
+
+def test_stored_result_keeps_its_token_count(cfg):
+    store_result(cfg, result(tokens=12345))
+    [loaded] = load_results(cfg, ON)
+    assert loaded.tokens == 12345
+
+
+def test_the_result_sidecar_shows_tokens(cfg):
+    store_result(cfg, result(tokens=48200))
+    md = (cfg.digest_dir / "2026-07-14" / "acme-api-code_review-030000.md").read_text(
+        encoding="utf-8"
+    )
+    assert "- tokens: 48.2k" in md
+
+
+def test_digest_reports_tokens_per_project_and_a_total(cfg):
+    text = render(
+        cfg,
+        [
+            result(project="acme-api", findings_md="- HIGH a.py:1 — x", tokens=48200),
+            result(project="payments-web", findings_md="- LOW b.py:2 — y", tokens=31000),
+        ],
+    )
+    assert "## Tokens" in text
+    assert "- acme-api — 48.2k" in text
+    assert "- payments-web — 31.0k" in text
+    assert "**total — 79.2k**" in text
+    # And the header carries the grand total.
+    assert "· 79.2k tokens" in text
+
+
+def test_digest_omits_the_tokens_section_when_nothing_was_reported(cfg):
+    text = render(cfg, [result(findings_md="- HIGH a.py:1 — x", tokens=0)])
+    assert "## Tokens" not in text
+    assert "tokens" not in text.split("## Run log")[0].lower()

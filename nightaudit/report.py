@@ -203,6 +203,8 @@ def store_result(cfg: Config, result: RunResult) -> Path:
         f"- started: {result.started_at.isoformat(timespec='seconds')}\n"
         f"- duration: {format_duration(result)}\n"
     )
+    if result.tokens > 0:
+        header += f"- tokens: {format_tokens(result.tokens)}\n"
     if result.detail:
         header += f"- detail: {result.detail}\n"
     body = (result.findings_md or "").strip() or NO_FINDINGS
@@ -280,6 +282,34 @@ def format_duration(result: RunResult) -> str:
     if total < 60:
         return f"{total}s"
     return f"{total // 60}m{total % 60:02d}s"
+
+
+def format_tokens(n: int) -> str:
+    """Compact token count for a status line: ``482``, ``48.2k``, ``1.2M``.
+
+    A measure, not a bill — see :attr:`RunResult.tokens`.
+    """
+    n = int(n)
+    if n < 1000:
+        return str(n)
+    if n < 1_000_000:
+        return f"{n / 1000:.1f}k"
+    return f"{n / 1_000_000:.1f}M"
+
+
+def tokens_by_project(results: list[RunResult]) -> dict[str, int]:
+    """Total tokens each project spent today, across every status that ran.
+
+    A failed or timed-out run still burned tokens, so it counts; ``skipped``
+    reports zero and drops out on its own. Projects that reported nothing are
+    left out entirely — a row of zeros is not information.
+    """
+    totals: dict[str, int] = {}
+    for r in results:
+        if r.project == PLACEHOLDER or r.tokens <= 0:
+            continue
+        totals[r.project] = totals.get(r.project, 0) + r.tokens
+    return totals
 
 
 def budget_bar(used: int, cap: int, width: int = 12) -> str:
@@ -383,15 +413,21 @@ def render_digest(
         {r.project for r in results if r.project != PLACEHOLDER}
         | {c.project for c in checks}
     )
+    token_totals = tokens_by_project(results)
+    total_tokens = sum(token_totals.values())
+
     out: list[str] = []
     out.append("# Nightaudit · morning digest")
     out.append("")
-    out.append(
+    summary = (
         f"{on.strftime('%a %b')} {on.day}, {on.year} · generated "
         f"{generated_at.strftime('%H:%M')} local · "
         f"{len(projects_seen)} project{'s' if len(projects_seen) != 1 else ''} · "
         f"{len(results)} run{'s' if len(results) != 1 else ''}"
     )
+    if total_tokens > 0:
+        summary += f" · {format_tokens(total_tokens)} tokens"
+    out.append(summary)
     out.append("")
 
     out.append("## Budget remaining")
@@ -456,10 +492,23 @@ def render_digest(
                 if project_checks:
                     out.append("#### Findings")
                     out.append("")
-                out.append(f"{len(items)} finding{'s' if len(items) != 1 else ''}")
+                line = f"{len(items)} finding{'s' if len(items) != 1 else ''}"
+                if token_totals.get(project):
+                    line += f" · {format_tokens(token_totals[project])} tokens"
+                out.append(line)
                 out.append("")
                 out.extend(_fmt_finding(f, with_project=False) for f in items)
                 out.append("")
+
+    if total_tokens > 0:
+        out.append("## Tokens")
+        out.append("")
+        out.append("How many tokens each project's reviews took today.")
+        out.append("")
+        for project in sorted(token_totals, key=lambda p: (-token_totals[p], p)):
+            out.append(f"- {project} — {format_tokens(token_totals[project])}")
+        out.append(f"- **total — {format_tokens(total_tokens)}**")
+        out.append("")
 
     out.append("## Run log")
     out.append("")

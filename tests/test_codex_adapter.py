@@ -214,6 +214,40 @@ def test_a_run_with_no_message_is_a_failure(adapter, popen_spy, project_dir):
     assert result.detail == "no output"
 
 
+def test_token_usage_is_captured_from_turn_completed(adapter, popen_spy, project_dir):
+    """The realistic STREAM ends with usage {input: 10, output: 5}."""
+    result, _ = collect(adapter, project_dir)
+    assert result.status == "ok"
+    assert result.tokens == 15
+
+
+def test_token_usage_accumulates_across_turns(adapter, popen_spy, project_dir):
+    """A review can take more than one turn; Codex reports usage per turn."""
+    popen_spy.box["proc"] = FakePopen(
+        [
+            line({"type": "thread.started", "thread_id": "t"}),
+            item("item.completed", "agent_message", text=ANSWER),
+            line({"type": "turn.completed", "usage": {"input_tokens": 10, "output_tokens": 5}}),
+            line({"type": "turn.completed", "usage": {"input_tokens": 3, "output_tokens": 2}}),
+        ]
+    )
+    result, _ = collect(adapter, project_dir)
+    assert result.status == "ok"
+    assert result.tokens == 20
+
+
+def test_a_stream_without_usage_reports_zero_tokens(adapter, popen_spy, project_dir):
+    popen_spy.box["proc"] = FakePopen(
+        [
+            line({"type": "thread.started", "thread_id": "t"}),
+            item("item.completed", "agent_message", text=ANSWER),
+        ]
+    )
+    result, _ = collect(adapter, project_dir)
+    assert result.status == "ok"
+    assert result.tokens == 0
+
+
 def test_malformed_lines_are_skipped_not_fatal(adapter, popen_spy, project_dir):
     popen_spy.box["proc"] = FakePopen(["not json\n", "\n", "[1,2]\n", *STREAM])
     result, _ = collect(adapter, project_dir)

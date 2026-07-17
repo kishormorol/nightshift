@@ -121,6 +121,21 @@ def test_run_says_when_there_are_no_findings(runner, written_cfg, stub_registry)
     assert "no findings" in result.output
 
 
+def test_run_reports_tokens_when_the_provider_gave_them(runner, written_cfg, stub_registry):
+    stub_registry.tokens = 48200
+    stub_registry.results = [("ok", "- HIGH a.py:1 — x")]
+    result = runner.invoke(main, ["run", "--now"])
+    assert "1 finding · 48.2k tokens" in result.output
+
+
+def test_run_omits_tokens_when_the_provider_reported_none(runner, written_cfg, stub_registry):
+    stub_registry.tokens = 0
+    stub_registry.results = [("ok", "- HIGH a.py:1 — x")]
+    result = runner.invoke(main, ["run", "--now"])
+    assert "1 finding" in result.output
+    assert "tokens" not in result.output
+
+
 def test_a_blocked_run_exits_zero_and_explains(runner, written_cfg, stub_registry):
     stub_registry.human_used_at = datetime.now()
     result = runner.invoke(main, ["run"])

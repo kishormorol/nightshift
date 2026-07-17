@@ -59,6 +59,12 @@ class RunResult:
     #: Populated for skipped/failed runs; shown in the digest run log.
     detail: str = ""
     attempt: int = 1
+    #: Total tokens the provider reported for this attempt (input + output, plus
+    #: cache reads/writes where a provider counts them). ``0`` means the CLI told
+    #: us nothing — an older CLI, a run killed before its usage frame, or a
+    #: provider that does not report it — not that the run was free. A measure,
+    #: never a bill: nightaudit budgets in runs, not tokens.
+    tokens: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -71,6 +77,7 @@ class RunResult:
             "duration_s": round(self.duration_s, 3),
             "detail": self.detail,
             "attempt": self.attempt,
+            "tokens": self.tokens,
         }
 
     @classmethod
@@ -85,6 +92,7 @@ class RunResult:
             duration_s=float(data.get("duration_s", 0.0)),
             detail=data.get("detail", ""),
             attempt=int(data.get("attempt", 1)),
+            tokens=int(data.get("tokens", 0)),
         )
 
     @property

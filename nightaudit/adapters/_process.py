@@ -67,6 +67,37 @@ def parse_line(line: str) -> dict | None:
     return payload if isinstance(payload, dict) else None
 
 
+#: The token counters a provider may put in a ``usage`` object. Both CLIs use
+#: ``input_tokens``/``output_tokens``; Claude adds the two cache counters, which
+#: are real tokens the model processed and so belong in an honest total. A
+#: provider that omits a key simply contributes zero for it.
+_USAGE_KEYS = (
+    "input_tokens",
+    "output_tokens",
+    "cache_creation_input_tokens",
+    "cache_read_input_tokens",
+)
+
+
+def tokens_from_usage(usage: object) -> int:
+    """Sum the token counts in a provider's ``usage`` object.
+
+    Defensive on purpose: usage is telemetry riding on the same stream as the
+    findings, and a malformed or partial frame must never turn a billed run into
+    an exception. Anything unreadable counts as zero.
+    """
+    if not isinstance(usage, dict):
+        return 0
+    total = 0
+    for key in _USAGE_KEYS:
+        value = usage.get(key)
+        if isinstance(value, bool):  # bool is an int subclass; not a token count
+            continue
+        if isinstance(value, (int, float)):
+            total += int(value)
+    return total
+
+
 def clip(text: str, limit: int) -> str:
     text = str(text or "").replace("\n", " ").strip()
     return text if len(text) <= limit else text[: limit - 1] + "…"

@@ -1,5 +1,7 @@
 <div align="center">
 
+[![nightaudit — your repos, reviewed overnight; a stylized morning digest showing per-provider run budgets, tokens used, and findings surfaced](https://raw.githubusercontent.com/kishormorol/nightaudit/main/docs/hero.png)](https://pypi.org/project/nightshift-cli/)
+
 # nightaudit
 
 **An audit doesn't change the books.**
